@@ -30,13 +30,13 @@ namespace NReco.Logging.Tests
 				Assert.Equal(2, logEntries.Length);
 
 				var entry1Parts = logEntries[0].Split('\t');
-				Assert.Equal("[TEST]", entry1Parts[1]);
-				Assert.Equal("Debug message", entry1Parts[3]);
+				Assert.Equal("[TEST]", entry1Parts[2]);
+				Assert.Equal("Debug message", entry1Parts[4]);
 				Assert.True(DateTime.Parse(entry1Parts[0]).Ticks <= DateTime.Now.Ticks);
 
 				var entry2Parts = logEntries[1].Split('\t');
-				Assert.Equal("[TEST]", entry2Parts[1]);
-				Assert.Equal("Warning message", entry2Parts[3]);
+				Assert.Equal("[TEST]", entry2Parts[2]);
+				Assert.Equal("Warning message", entry2Parts[4]);
 
 				factory = new LoggerFactory();
 				logger = factory.CreateLogger("TEST2");

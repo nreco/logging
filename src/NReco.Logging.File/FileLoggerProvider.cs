@@ -44,6 +44,11 @@ namespace NReco.Logging.File {
 
 		public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
+		/// <summary>
+		/// Custom formatter for log entry. 
+		/// </summary>
+		public Func<LogMessage,string> FormatLogEntry { get; set; }
+
 		public FileLoggerProvider(string fileName) : this(fileName, true) {
 
 		}
@@ -89,9 +94,10 @@ namespace NReco.Logging.File {
 		}
 
 		private FileLogger CreateLoggerImplementation(string name) {
-			return new FileLogger(name, MinLevel, WriteEntry);
+			return new FileLogger(name, this);
 		}
-		private void WriteEntry(string message) {
+
+		internal void WriteEntry(string message) {
 			if (!entryQueue.IsAddingCompleted) {
 				try {
 					entryQueue.Add(message);
