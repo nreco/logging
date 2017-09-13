@@ -12,6 +12,31 @@ namespace NReco.Logging.Tests
 	public class FileProviderTests {
 
 		[Fact]
+		public void WriteToFileAndOverwrite() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				var factory = new LoggerFactory();
+				factory.AddProvider(new FileLoggerProvider(tmpFile, false));
+				var logger = factory.CreateLogger("TEST");
+				logger.LogInformation("Line1");
+				factory.Dispose();
+
+				Assert.Equal(1, System.IO.File.ReadAllLines(tmpFile).Length);
+
+				factory = new LoggerFactory();
+				logger = factory.CreateLogger("TEST");
+				factory.AddProvider(new FileLoggerProvider(tmpFile, false));
+				logger.LogInformation("Line2");
+				factory.Dispose();
+
+				Assert.Equal(1, System.IO.File.ReadAllLines(tmpFile).Length);  // file should be overwritten
+
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
 		public void WriteToFileAndAppend() {
 			var tmpFile = Path.GetTempFileName();
 			try {

@@ -55,6 +55,7 @@ namespace NReco.Logging.File {
 
 		public FileLoggerProvider(string fileName, bool append) {
 			LogFileName = fileName;
+			Append = append;
 			LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
 			if (Append)
 				LogFileStream.Seek(0, SeekOrigin.End);
