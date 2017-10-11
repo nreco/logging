@@ -2,15 +2,16 @@
 
   <PropertyGroup>
     <Description>Standalone file logging provider for .NET Core without dependencies on the logging frameworks.</Description>
-    <Copyright>Copyright (c) 2017 Vitalii Fedorchenko</Copyright>
+    <Title>.NET Core file logger provider.</Title>
+	<Copyright>Copyright (c) 2017 Vitalii Fedorchenko</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.0.2</VersionPrefix>
+    <VersionPrefix>1.0.3</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
-    <TargetFrameworks>netstandard1.3</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>NReco.Logging.File</AssemblyName>
     <PackageId>NReco.Logging.File</PackageId>
-    <PackageTags>logging;logfiles;netstandard;netcore</PackageTags>
+    <PackageTags>log;file;logging;asp.net;file-logger;logging-provider;netstandard;netcore</PackageTags>
     <PackageIconUrl>https://www.nrecosite.com/img/nreco-logo-200.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
@@ -25,7 +26,20 @@
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
   </PropertyGroup>
 
-  <ItemGroup>
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <DefineConstants>$(DefineConstants);NETSTANDARD2</DefineConstants>
+  </PropertyGroup>   
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
+    <DefineConstants>$(DefineConstants);NETSTANDARD1</DefineConstants>
+  </PropertyGroup>   
+  
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="2.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.0.0" />
+  </ItemGroup>
+    
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.0" />
 	<PackageReference Include="Microsoft.Extensions.Logging.Filter" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.0" />
@@ -33,7 +47,6 @@
     <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />	
     <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
     <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />	
-
   </ItemGroup>
 
 </Project>

@@ -15,19 +15,48 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using System.IO;
-using System.Collections.Concurrent;
-using System.Text;
 
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 using NReco.Logging.File;
 
 namespace Microsoft.Extensions.Logging {
 
 	public static class FileLoggerExtensions {
+
+#if NETSTANDARD2
+
+		/// <summary>
+		/// Adds a file logger.
+		/// </summary>
+		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string fileName, bool append = true) {
+			builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>( 
+				(srvPrv) => {
+					return new FileLoggerProvider(fileName, append);
+				}
+			));
+			return builder;
+		}
+
+		/// <summary>
+		/// Adds a file logger by specified configuration.
+		/// </summary>
+		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
+		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, IConfiguration configuration) {
+			var fileLoggerPrv = CreateFromConfiguration(configuration);
+			if (fileLoggerPrv != null) {
+				builder.Services.AddSingleton<ILoggerProvider,FileLoggerProvider>(
+					(srvPrv) => {
+						return fileLoggerPrv;
+					}
+				);
+			}
+			return builder;
+		}
+
+#endif
 
 		/// <summary>
 		/// Adds a file logger.
@@ -47,19 +76,10 @@ namespace Microsoft.Extensions.Logging {
 		/// <param name="configuration">The <see cref="IConfiguration"/> to use getting <see cref="FileLoggerProvider"/> settings.</param>
 		public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration) {
 			var prvFactory = factory;
-			
-			var fileSection = configuration.GetSection("File");
-			if (fileSection==null)
-				return factory;  // file logger is not configured
-			var fileName = fileSection["Path"];
-			if (String.IsNullOrWhiteSpace(fileName))
-				return factory; // file logger is not configured
-
-			var append = true;
-			var appendVal = fileSection["Append"];
-			if (!String.IsNullOrEmpty(appendVal))
-				append = bool.Parse(appendVal);
-
+			var fileLoggerPrv = CreateFromConfiguration(configuration);
+			if (fileLoggerPrv == null)
+				return factory;
+#if NETSTANDARD1
 			var loggerSettings = new FilterLoggerSettings();
 			var logLevelsCfg = configuration.GetSection("LogLevel");
 			bool hasFilter = false;
@@ -74,10 +94,28 @@ namespace Microsoft.Extensions.Logging {
 			}
 			if (hasFilter)
 				prvFactory = prvFactory.WithFilter(loggerSettings);
+#endif
 
-			prvFactory.AddProvider(new FileLoggerProvider(fileName, append));
+			prvFactory.AddProvider(fileLoggerPrv);
 			return factory;
 		}
+
+		private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration) {
+			var fileSection = configuration.GetSection("File");
+			if (fileSection == null)
+				return null;  // file logger is not configured
+			var fileName = fileSection["Path"];
+			if (String.IsNullOrWhiteSpace(fileName))
+				return null; // file logger is not configured
+
+			var append = true;
+			var appendVal = fileSection["Append"];
+			if (!String.IsNullOrEmpty(appendVal))
+				append = bool.Parse(appendVal);
+
+			return new FileLoggerProvider(fileName, append);
+		}
+
 
 	}
 
