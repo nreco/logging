@@ -33,7 +33,7 @@ Example of configuration section from appsettings.json:
 ## Custom log entry formatting
 You can specify `FileLoggerProvider.FormatLogEntry` handler to customize log entry content. For example, it is possible to write log entry as JSON array:
 ```
-loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("App_Data/stweb.log", true) {
+loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js", true) {
 	FormatLogEntry = (msg) => {
 		var sb = new System.Text.StringBuilder();
 		StringWriter sw = new StringWriter(sb);
@@ -49,7 +49,7 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("App_Data/st
 	}
 });
 ```
-(in case of .NET Core use `loggingBuilder.AddProvider` instead).
+(in case of .NET Core 2 use `loggingBuilder.AddProvider` instead).
 
 ## License
 Copyright 2017 Vitaliy Fedorchenko
