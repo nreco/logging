@@ -3,9 +3,9 @@
   <PropertyGroup>
     <Description>Standalone file logging provider for .NET Core without dependencies on the logging frameworks.</Description>
     <Title>.NET Core file logger provider.</Title>
-	<Copyright>Copyright (c) 2017 Vitalii Fedorchenko</Copyright>
+	<Copyright>Copyright (c) 2017-2018 Vitalii Fedorchenko</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.0.3</VersionPrefix>
+    <VersionPrefix>1.0.4</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
