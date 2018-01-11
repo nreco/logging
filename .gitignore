@@ -4,6 +4,7 @@ bin/
 obj/
 *.user
 *.suo
+*.snk
 .vs
 *.nuget.targets
 *.lock.json

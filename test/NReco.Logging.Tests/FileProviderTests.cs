@@ -77,6 +77,59 @@ namespace NReco.Logging.Tests
 		}
 
 		[Fact]
+		public void WriteRollingFile() {
+			var tmpFileDir = Path.GetTempFileName();  // for test debug: "./"
+			System.IO.File.Delete(tmpFileDir);
+
+			Directory.CreateDirectory(tmpFileDir);
+			try {
+				var logFile = Path.Combine(tmpFileDir, "test.log");
+
+				LoggerFactory factory = null;
+				ILogger logger = null;
+				createFactoryAndTestLogger();
+
+				for (int i = 0; i < 400; i++) {
+					logger.LogInformation("TEST 0123456789");
+					if (i % 50 == 0) {
+						System.Threading.Thread.Sleep(20); // give some time for log writer to handle the queue
+					}
+				}
+				factory.Dispose();
+
+				// check how many files are created
+				Assert.Equal(4, Directory.GetFiles(tmpFileDir, "test*.log").Length);
+				var lastFileSize = new FileInfo(Path.Combine(tmpFileDir, "test3.log")).Length;
+
+				// create new factory and continue
+				createFactoryAndTestLogger();
+				logger.LogInformation("TEST 0123456789");
+				factory.Dispose();
+				Assert.True(new FileInfo(Path.Combine(tmpFileDir, "test3.log")).Length > lastFileSize);
+
+				// add many entries and ensure that there are only 5 log files
+				createFactoryAndTestLogger();
+				for (int i = 0; i < 1000; i++) {
+					logger.LogInformation("TEST 0123456789");
+				}
+				factory.Dispose();
+				Assert.Equal(5, Directory.GetFiles(tmpFileDir, "test*.log").Length);
+
+				void createFactoryAndTestLogger() {
+					factory = new LoggerFactory();
+					factory.AddProvider(new FileLoggerProvider(logFile, new FileLoggerOptions() {
+						FileSizeLimitBytes = 1024 * 8,
+						MaxRollingFiles = 5
+					}));
+					logger = factory.CreateLogger("TEST");
+				}
+
+			} finally {
+				Directory.Delete(tmpFileDir, true);
+			}
+		}
+
+		[Fact]
 		public void WriteConcurrent() {
 			var tmpFile = Path.GetTempFileName();
 			try {

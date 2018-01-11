@@ -41,6 +41,20 @@ namespace Microsoft.Extensions.Logging {
 		}
 
 		/// <summary>
+		/// Adds a file logger.
+		/// </summary>
+		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string fileName, Action<FileLoggerOptions> configure) {
+			builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>(
+				(srvPrv) => {
+					var options = new FileLoggerOptions();
+					configure(options);
+					return new FileLoggerProvider(fileName, options);
+				}
+			));
+			return builder;
+		}
+
+		/// <summary>
 		/// Adds a file logger by specified configuration.
 		/// </summary>
 		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
@@ -108,12 +122,20 @@ namespace Microsoft.Extensions.Logging {
 			if (String.IsNullOrWhiteSpace(fileName))
 				return null; // file logger is not configured
 
-			var append = true;
+			var fileLoggerOptions = new FileLoggerOptions();
 			var appendVal = fileSection["Append"];
-			if (!String.IsNullOrEmpty(appendVal))
-				append = bool.Parse(appendVal);
+			if (!String.IsNullOrEmpty(appendVal) && bool.TryParse(appendVal, out var append))
+				fileLoggerOptions.Append = append;
 
-			return new FileLoggerProvider(fileName, append);
+			var fileLimitVal = fileSection["FileSizeLimitBytes"];
+			if (!String.IsNullOrEmpty(fileLimitVal) && Int64.TryParse(fileLimitVal, out var fileLimit))
+				fileLoggerOptions.FileSizeLimitBytes = fileLimit;
+
+			var maxFilesVal = fileSection["MaxRollingFiles"];
+			if (!String.IsNullOrEmpty(maxFilesVal) && Int32.TryParse(maxFilesVal, out var maxFiles))
+				fileLoggerOptions.MaxRollingFiles = maxFiles;
+
+			return new FileLoggerProvider(fileName, fileLoggerOptions);
 		}
 
 

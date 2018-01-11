@@ -1,10 +1,11 @@
 # NReco.Logging.File
-Simple file logger provider for .NET Core (.NET Core 2) without additional dependencies.
+Simple and efficient file logger provider for .NET Core (.NET Core 2) without additional dependencies.
 
 [![NuGet Release](https://img.shields.io/nuget/v/NReco.Logging.File.svg)](https://www.nuget.org/packages/NReco.Logging.File/)
 
 * very similar to standard ConsoleLogger but writes to a file
 * can append to a file
+* supports rolling file behaviour and can control total log size
 * suitable for intensive concurrent usage: has internal message queue to avoid threads blocking
 
 ## How to use
@@ -25,10 +26,18 @@ Example of configuration section from appsettings.json:
 	},
 	"File": {
 		"Path": "app.log",
-		"Append": "True"
+		"Append": "True",
+		"FileSizeLimitBytes": 0,  // use to activate rolling file behaviour
+		"MaxRollingFiles": 0  // use to specify max number of log files
 	}
 }
 ```
+
+## Rolling File
+This feature is activated with `FileLoggerOptions` properties: `FileSizeLimitBytes` and `MaxRollingFiles`. Lets assume that file logger is configured for "test.log":
+
+* if only `FileSizeLimitBytes` is specified file logger will create "test.log", "test1.log", "test2.log" etc
+* use `MaxRollingFiles` in addition to `FileSizeLimitBytes` to limit number of log files; for example, for value "3" file logger will create "test.log", "test1.log", "test2.log" and again "test.log", "test1.log" (old files will be overwritten).
 
 ## Custom log entry formatting
 You can specify `FileLoggerProvider.FormatLogEntry` handler to customize log entry content. For example, it is possible to write log entry as JSON array:
@@ -49,9 +58,9 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js
 	}
 });
 ```
-(in case of .NET Core 2 use `loggingBuilder.AddProvider` instead).
+(in case of .NET Core 2 use `loggingBuilder.AddProvider` instead of `loggerFactory.AddProvider`).
 
 ## License
-Copyright 2017 Vitaliy Fedorchenko
+Copyright 2017-2018 Vitaliy Fedorchenko
 
 Distributed under the MIT license

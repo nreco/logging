@@ -15,6 +15,16 @@
     <PackageIconUrl>https://www.nrecosite.com/img/nreco-logo-200.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
+	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+
+.NET Core 2:   
+    loggingBuilder.AddFile("app.log", append:true);
+.NET Core 1.x:
+    loggerFactory.AddFile("app.log", append:true);	
+
+Version 1.0.4 changes:
+ - added "File" provider alias for MVC Core 2 filtering rules
+ - added 'rolling file' behaviour controlled with new FileLoggerProvider properties (FileSizeLimitBytes and MaxRollingFiles)</PackageReleaseNotes>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -24,6 +34,8 @@
     <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <SignAssembly>false</SignAssembly>
+    <!--AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile-->
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
