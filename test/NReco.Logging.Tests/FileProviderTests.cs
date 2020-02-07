@@ -184,15 +184,6 @@ namespace NReco.Logging.Tests
 				factory.Dispose();
 
 				Assert.Equal(1, System.IO.File.ReadAllLines(expandedTmpFileName).Length);
-
-				factory = new LoggerFactory();
-				logger = factory.CreateLogger("TEST");
-				factory.AddProvider(new FileLoggerProvider(tmpFileWithEnvironmentVariable, false));
-				logger.LogInformation("Line2");
-				factory.Dispose();
-
-				Assert.Equal(1, System.IO.File.ReadAllLines(expandedTmpFileName).Length);  // file should be overwritten
-
 			}
 			finally
 			{
