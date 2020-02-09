@@ -170,5 +170,27 @@ namespace NReco.Logging.Tests
 			}
 		}
 
+		[Fact]
+		public void ExpandEnvironmentVariables()
+		{
+			var tmpFileWithEnvironmentVariable = "%TEMP%\\" + Path.GetFileName(Path.GetTempFileName());
+			var expandedTmpFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(tmpFileWithEnvironmentVariable));
+			try
+			{
+				var factory = new LoggerFactory();
+				factory.AddProvider(new FileLoggerProvider(tmpFileWithEnvironmentVariable, false));
+				var logger = factory.CreateLogger("TEST");
+				logger.LogInformation("Line1");
+				factory.Dispose();
+
+				Assert.Equal(1, System.IO.File.ReadAllLines(expandedTmpFileName).Length);
+			}
+			finally
+			{
+				System.IO.File.Delete(expandedTmpFileName);
+			}
+
+		}
+
 	}
 }

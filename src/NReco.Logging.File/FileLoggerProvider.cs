@@ -59,7 +59,7 @@ namespace NReco.Logging.File {
 		}
 
 		public FileLoggerProvider(string fileName, FileLoggerOptions options) {
-			LogFileName = fileName;
+			LogFileName = Environment.ExpandEnvironmentVariables(fileName);
 			Append = options.Append;
 			FileSizeLimitBytes = options.FileSizeLimitBytes;
 			MaxRollingFiles = options.MaxRollingFiles;
