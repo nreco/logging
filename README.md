@@ -1,5 +1,5 @@
 # NReco.Logging.File
-Simple and efficient file logger provider for .NET Core (.NET Core 2) without additional dependencies.
+Simple and efficient file logger provider for .NET Core (any version) without additional dependencies.
 
 [![NuGet Release](https://img.shields.io/nuget/v/NReco.Logging.File.svg)](https://www.nuget.org/packages/NReco.Logging.File/)
 
@@ -11,7 +11,7 @@ Simple and efficient file logger provider for .NET Core (.NET Core 2) without ad
 ## How to use
 Add *NReco.Logging.File* package reference and initialize file logging provider:
 
-.NET Core 2 | .NET Core 1.x
+.NET Core 2.x/3.x | .NET Core 1.x
 ----------- | -------------
 In services.AddLogging | In Startup.cs Configure method
 `loggingBuilder.AddFile("app.log", append:true);`<br/>or<br/>`var loggingSection = Configuration.GetSection("Logging");`<br/>`loggingBuilder.AddFile(loggingSection);` | `loggerFactory.AddFile("app.log", append:true);`<br/>or<br/>`var loggingSection = Configuration.GetSection("Logging");`<br/>`loggerFactory.AddFile(loggingSection);`
@@ -61,6 +61,6 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js
 (in case of .NET Core 2 use `loggingBuilder.AddProvider` instead of `loggerFactory.AddProvider`).
 
 ## License
-Copyright 2017-2018 Vitaliy Fedorchenko
+Copyright 2017-2020 Vitaliy Fedorchenko and contributors
 
 Distributed under the MIT license

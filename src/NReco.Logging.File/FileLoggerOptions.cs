@@ -53,11 +53,6 @@ namespace NReco.Logging.File {
 		/// </summary>
 		public Func<LogMessage, string> FormatLogEntry { get; set; }
 
-		/// <summary>
-		/// Automatically create the directory if it does not exist.
-		/// </summary>
-		public bool CreateDirectory { get; set; }
-
 	}
 
 

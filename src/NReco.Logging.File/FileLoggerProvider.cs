@@ -44,7 +44,6 @@ namespace NReco.Logging.File {
 		private readonly bool Append = true;
 		private readonly long FileSizeLimitBytes = 0;
 		private readonly int MaxRollingFiles = 0;
-		private readonly bool CreateDirectory;
 
 		public LogLevel MinLevel { get; set; } = LogLevel.Debug;
 
@@ -60,12 +59,11 @@ namespace NReco.Logging.File {
 		}
 
 		public FileLoggerProvider(string fileName, FileLoggerOptions options) {
-			LogFileName = fileName;
+			LogFileName = Environment.ExpandEnvironmentVariables(fileName);
 			Append = options.Append;
 			FileSizeLimitBytes = options.FileSizeLimitBytes;
 			MaxRollingFiles = options.MaxRollingFiles;
 			FormatLogEntry = options.FormatLogEntry;
-			CreateDirectory = options.CreateDirectory;
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(
@@ -151,8 +149,10 @@ namespace NReco.Logging.File {
 
 			void OpenFile(bool append) {
 				var fileInfo = new FileInfo(LogFileName);
-				if (FileLogPrv.CreateDirectory)
-					fileInfo.Directory.Create();
+				
+				// Directory.Create will check if the directory already exists,
+				// so there is no need for a "manual" check first.
+				fileInfo.Directory.Create();
 
 				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
 				if (append) {
