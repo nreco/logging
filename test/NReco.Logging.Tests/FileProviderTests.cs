@@ -171,7 +171,7 @@ namespace NReco.Logging.Tests
 		}
 
 		[Fact]
-		public void CreateDirectoryAutomaticallyIfConfigured()
+		public void CreateDirectoryAutomatically()
 		{
 			
 			var tmpFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "testfile.log");
@@ -179,10 +179,7 @@ namespace NReco.Logging.Tests
 			{
 				var factory = new LoggerFactory();
 				
-				factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions()
-				{
-					CreateDirectory = true
-				}));
+				factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions()));
 				
 				var logger = factory.CreateLogger("TEST");
 				logger.LogInformation("Line1");
@@ -200,35 +197,6 @@ namespace NReco.Logging.Tests
 			}
 		}
 
-		[Fact]
-		public void DoesNotCreateDirectoryAutomaticallyWithDefault()
-		{
-			var tmpFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "testfile.log");
-			var directory = Path.GetDirectoryName(tmpFile);
-			try
-			{
-				var factory = new LoggerFactory();
-				bool directoryNotFoundThrown = false;
-				try
-				{
-					factory.AddProvider(new FileLoggerProvider(tmpFile));
-				}
-				catch (DirectoryNotFoundException)
-				{
-					directoryNotFoundThrown = true;
-				}
-				factory.Dispose();
-				Assert.True(directoryNotFoundThrown);
-				Assert.False(Directory.Exists(directory));
-			}
-			finally
-			{
-				if (Directory.Exists(directory))
-				{
-					Directory.Delete(directory, true);
-				}
-			}
-		}
 		[Fact]
 		public void ExpandEnvironmentVariables()
 		{
