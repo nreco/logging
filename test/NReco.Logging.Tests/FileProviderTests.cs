@@ -171,6 +171,65 @@ namespace NReco.Logging.Tests
 		}
 
 		[Fact]
+		public void CreateDirectoryAutomaticallyIfConfigured()
+		{
+			
+			var tmpFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "testfile.log");
+			try
+			{
+				var factory = new LoggerFactory();
+				
+				factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions()
+				{
+					CreateDirectory = true
+				}));
+				
+				var logger = factory.CreateLogger("TEST");
+				logger.LogInformation("Line1");
+				factory.Dispose();
+
+				Assert.Equal(1, System.IO.File.ReadAllLines(tmpFile).Length);
+			}
+			finally
+			{
+				var directory = Path.GetDirectoryName(tmpFile);
+				if (Directory.Exists(directory))
+				{
+					Directory.Delete(directory, true);
+				}
+			}
+		}
+
+		[Fact]
+		public void DoesNotCreateDirectoryAutomaticallyWithDefault()
+		{
+			var tmpFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "testfile.log");
+			var directory = Path.GetDirectoryName(tmpFile);
+			try
+			{
+				var factory = new LoggerFactory();
+				bool directoryNotFoundThrown = false;
+				try
+				{
+					factory.AddProvider(new FileLoggerProvider(tmpFile));
+				}
+				catch (DirectoryNotFoundException)
+				{
+					directoryNotFoundThrown = true;
+				}
+				factory.Dispose();
+				Assert.True(directoryNotFoundThrown);
+				Assert.False(Directory.Exists(directory));
+			}
+			finally
+			{
+				if (Directory.Exists(directory))
+				{
+					Directory.Delete(directory, true);
+				}
+			}
+		}
+		[Fact]
 		public void ExpandEnvironmentVariables()
 		{
 			var tmpFileWithEnvironmentVariable = "%TEMP%\\" + Path.GetFileName(Path.GetTempFileName());

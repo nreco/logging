@@ -149,6 +149,11 @@ namespace NReco.Logging.File {
 
 			void OpenFile(bool append) {
 				var fileInfo = new FileInfo(LogFileName);
+				
+				// Directory.Create will check if the directory already exists,
+				// so there is no need for a "manual" check first.
+				fileInfo.Directory.Create();
+
 				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
 				if (append) {
 					LogFileStream.Seek(0, SeekOrigin.End);
