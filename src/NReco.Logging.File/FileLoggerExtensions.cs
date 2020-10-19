@@ -58,8 +58,8 @@ namespace Microsoft.Extensions.Logging {
 		/// Adds a file logger by specified configuration.
 		/// </summary>
 		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
-		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, IConfiguration configuration) {
-			var fileLoggerPrv = CreateFromConfiguration(configuration);
+		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, IConfiguration configuration, Action<FileLoggerOptions> configure = null) {
+			var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
 			if (fileLoggerPrv != null) {
 				builder.Services.AddSingleton<ILoggerProvider,FileLoggerProvider>(
 					(srvPrv) => {
@@ -88,9 +88,9 @@ namespace Microsoft.Extensions.Logging {
 		/// </summary>
 		/// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
 		/// <param name="configuration">The <see cref="IConfiguration"/> to use getting <see cref="FileLoggerProvider"/> settings.</param>
-		public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration) {
+		public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration, Action<FileLoggerOptions> configure = null) {
 			var prvFactory = factory;
-			var fileLoggerPrv = CreateFromConfiguration(configuration);
+			var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
 			if (fileLoggerPrv == null)
 				return factory;
 #if NETSTANDARD1
@@ -114,7 +114,7 @@ namespace Microsoft.Extensions.Logging {
 			return factory;
 		}
 
-		private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration) {
+		private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration, Action<FileLoggerOptions> configure) {
 			var fileSection = configuration.GetSection("File");
 			if (fileSection == null)
 				return null;  // file logger is not configured
@@ -134,6 +134,9 @@ namespace Microsoft.Extensions.Logging {
 			var maxFilesVal = fileSection["MaxRollingFiles"];
 			if (!String.IsNullOrEmpty(maxFilesVal) && Int32.TryParse(maxFilesVal, out var maxFiles))
 				fileLoggerOptions.MaxRollingFiles = maxFiles;
+
+			if (configure != null)
+				configure(fileLoggerOptions);
 
 			return new FileLoggerProvider(fileName, fileLoggerOptions);
 		}

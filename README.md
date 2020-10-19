@@ -4,19 +4,26 @@ Simple and efficient file logger provider for .NET Core (any version) without ad
 [![NuGet Release](https://img.shields.io/nuget/v/NReco.Logging.File.svg)](https://www.nuget.org/packages/NReco.Logging.File/)
 
 * very similar to standard ConsoleLogger but writes to a file
-* can append to a file
-* supports rolling file behaviour and can control total log size
+* can append to existing file or overwrite log file on restart
+* supports a 'rolling file' behaviour and can control total log size
+* it is possible to change log file name on-the-fly
 * suitable for intensive concurrent usage: has internal message queue to avoid threads blocking
 
 ## How to use
-Add *NReco.Logging.File* package reference and initialize file logging provider:
-
-.NET Core 2.x/3.x | .NET Core 1.x
------------ | -------------
-In services.AddLogging | In Startup.cs Configure method
-`loggingBuilder.AddFile("app.log", append:true);`<br/>or<br/>`var loggingSection = Configuration.GetSection("Logging");`<br/>`loggingBuilder.AddFile(loggingSection);` | `loggerFactory.AddFile("app.log", append:true);`<br/>or<br/>`var loggingSection = Configuration.GetSection("Logging");`<br/>`loggerFactory.AddFile(loggingSection);`
-
-Example of configuration section from appsettings.json:
+Add *NReco.Logging.File* package reference and initialize a file logging provider in `services.AddLogging` (Startup.cs):
+```
+services.AddLogging(loggingBuilder => {
+	loggingBuilder.AddFile("app.log", append:true);
+});
+```
+or
+```
+services.AddLogging(loggingBuilder => {
+	var loggingSection = Configuration.GetSection("Logging");
+	loggingBuilder.AddFile(loggingSection);
+});
+```
+Example of the configuration section in appsettings.json:
 ```
 "Logging": {
 	"LogLevel": {
@@ -38,6 +45,19 @@ This feature is activated with `FileLoggerOptions` properties: `FileSizeLimitByt
 
 * if only `FileSizeLimitBytes` is specified file logger will create "test.log", "test1.log", "test2.log" etc
 * use `MaxRollingFiles` in addition to `FileSizeLimitBytes` to limit number of log files; for example, for value "3" file logger will create "test.log", "test1.log", "test2.log" and again "test.log", "test1.log" (old files will be overwritten).
+
+## Change log file name on-the-fly
+It is possible to specify a custom log file name formatter with `FileLoggerOptions` property `FormatLogFileName`. Log file name may change in time - for example, to create a new log file per day:
+```
+services.AddLogging(loggingBuilder => {
+	loggingBuilder.AddFile("app_{0:yyyy}-{0:MM}-{0:dd}.log", fileLoggerOpts => {
+		fileLoggerOpts.FormatLogFileName = fName => {
+			return String.Format(fName, DateTime.UtcNow);
+		};
+	});
+});
+```
+Note that this handler is called on _every_ log message 'write'; you may cache the log file name calculation in your handler to avoid any potential overhead in case of high-load logger usage.
 
 ## Custom log entry formatting
 You can specify `FileLoggerProvider.FormatLogEntry` handler to customize log entry content. For example, it is possible to write log entry as JSON array:

@@ -4,6 +4,7 @@ using Xunit;
 using NReco.Logging.File;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using System.Threading;
 using System.IO;
 
 namespace NReco.Logging.Tests
@@ -185,7 +186,7 @@ namespace NReco.Logging.Tests
 				logger.LogInformation("Line1");
 				factory.Dispose();
 
-				Assert.Equal(1, System.IO.File.ReadAllLines(tmpFile).Length);
+				Assert.Single(System.IO.File.ReadAllLines(tmpFile));
 			}
 			finally
 			{
@@ -210,7 +211,7 @@ namespace NReco.Logging.Tests
 				logger.LogInformation("Line1");
 				factory.Dispose();
 
-				Assert.Equal(1, System.IO.File.ReadAllLines(expandedTmpFileName).Length);
+				Assert.Single(System.IO.File.ReadAllLines(expandedTmpFileName));
 			}
 			finally
 			{
@@ -218,6 +219,43 @@ namespace NReco.Logging.Tests
 			}
 
 		}
+
+		[Fact]
+		public void CustomLogFileNameFormatter() {
+			var tmpFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "testfile_{0}.log");
+
+			try {
+				var factory = new LoggerFactory();
+				int fmtLogFileNameIdx = 0;
+
+				factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+					FormatLogFileName = (fName) => {
+						return String.Format(fName, fmtLogFileNameIdx);
+					}
+				}));
+
+				var logger = factory.CreateLogger("TEST");
+				for (int i = 0; i < 15; i++) {
+					fmtLogFileNameIdx = i / 5;
+					if (i > 0 && i % 5 == 0)
+						Thread.Sleep(1000); // log writer works in another thread. Let him to process log messages in queue.
+					logger.LogInformation("Line" + (i + 1).ToString());
+					
+				}
+				factory.Dispose();
+
+				// should be 3 files, each with 5 lines
+				var logFiles = Directory.GetFiles( Path.GetDirectoryName(tmpFile) , "*.*", SearchOption.TopDirectoryOnly);
+				Assert.Equal(3, logFiles.Length);
+			} finally {
+				var directory = Path.GetDirectoryName(tmpFile);
+				if (Directory.Exists(directory)) {
+					Directory.Delete(directory, true);
+				}
+			}
+
+		}
+
 
 	}
 }

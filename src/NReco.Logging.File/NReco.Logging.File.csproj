@@ -5,7 +5,7 @@
     <Title>.NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2020 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.0.5</VersionPrefix>
+    <VersionPrefix>1.1.0</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -19,8 +19,9 @@
 
 .NET Core 2.x/3.x:   
     loggingBuilder.AddFile("app.log", append:true);
-.NET Core 1.x:
-    loggerFactory.AddFile("app.log", append:true);	
+
+Version 1.1.0 changes:
+ - added the ability to customize log file name on-the-fly with "FormatLogFileName" handler
 
 Version 1.0.5 changes:
  - log file folder is created automatically if not exists
@@ -39,7 +40,7 @@ Version 1.0.4 changes:
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <SignAssembly>false</SignAssembly>
-    <!--AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile-->
+    <AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">

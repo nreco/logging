@@ -52,6 +52,11 @@ namespace NReco.Logging.File {
 		/// </summary>
 		public Func<LogMessage,string> FormatLogEntry { get; set; }
 
+		/// <summary>
+		/// Custom formatter for the log file name.
+		/// </summary>
+		public Func<string, string> FormatLogFileName { get; set; }
+
 		public FileLoggerProvider(string fileName) : this(fileName, true) {
 		}
 
@@ -64,6 +69,7 @@ namespace NReco.Logging.File {
 			FileSizeLimitBytes = options.FileSizeLimitBytes;
 			MaxRollingFiles = options.MaxRollingFiles;
 			FormatLogEntry = options.FormatLogEntry;
+			FormatLogFileName = options.FormatLogFileName;
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(
@@ -124,14 +130,23 @@ namespace NReco.Logging.File {
 				OpenFile(FileLogPrv.Append);
 			}
 
+			string GetBaseLogFileName() {
+				var fName = FileLogPrv.LogFileName;
+				if (FileLogPrv.FormatLogFileName != null)
+					fName = FileLogPrv.FormatLogFileName(fName);
+				return fName;
+			}
+
 			void DetermineLastFileLogName() {
+				var baseLogFileName = GetBaseLogFileName();
+				__LastBaseLogFileName = baseLogFileName;
 				if (FileLogPrv.FileSizeLimitBytes>0) {
 					// rolling file is used
-					var logFileMask = Path.GetFileNameWithoutExtension(FileLogPrv.LogFileName) + "*" + Path.GetExtension(FileLogPrv.LogFileName);
-					var logDirName = Path.GetDirectoryName(FileLogPrv.LogFileName);
+					var logFileMask = Path.GetFileNameWithoutExtension(baseLogFileName) + "*" + Path.GetExtension(baseLogFileName);
+					var logDirName = Path.GetDirectoryName(baseLogFileName);
 					if (String.IsNullOrEmpty(logDirName))
 						logDirName = Directory.GetCurrentDirectory();
-					var logFiles = Directory.GetFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly);
+					var logFiles = Directory.Exists(logDirName) ? Directory.GetFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly) : Array.Empty<string>();
 					if (logFiles.Length>0) {
 						var lastFileInfo = logFiles
 								.Select(fName => new FileInfo(fName))
@@ -140,10 +155,10 @@ namespace NReco.Logging.File {
 						LogFileName = lastFileInfo.FullName;
 					} else {
 						// no files yet, use default name
-						LogFileName = FileLogPrv.LogFileName;
+						LogFileName = baseLogFileName;
 					}
 				} else {
-					LogFileName = FileLogPrv.LogFileName;
+					LogFileName = baseLogFileName;
 				}
 			}
 
@@ -164,8 +179,15 @@ namespace NReco.Logging.File {
 			}
 
 			string GetNextFileLogName() {
+				var baseLogFileName = GetBaseLogFileName();
+				// if file does not exist or file size limit is not reached - do not add rolling file index
+				if (!System.IO.File.Exists(baseLogFileName) || 
+					FileLogPrv.FileSizeLimitBytes <= 0 || 
+					new System.IO.FileInfo(baseLogFileName).Length< FileLogPrv.FileSizeLimitBytes)
+					return baseLogFileName;
+
 				int currentFileIndex = 0;
-				var baseFileNameOnly = Path.GetFileNameWithoutExtension(FileLogPrv.LogFileName);
+				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName);
 				var currentFileNameOnly = Path.GetFileNameWithoutExtension(LogFileName);
 
 				var suffix = currentFileNameOnly.Substring(baseFileNameOnly.Length);
@@ -177,19 +199,37 @@ namespace NReco.Logging.File {
 					nextFileIndex %= FileLogPrv.MaxRollingFiles;
 				}
 
-				var nextFileName = baseFileNameOnly + (nextFileIndex>0 ? nextFileIndex.ToString() : "") + Path.GetExtension(FileLogPrv.LogFileName);
-				return Path.Combine(Path.GetDirectoryName(FileLogPrv.LogFileName), nextFileName );
+				var nextFileName = baseFileNameOnly + (nextFileIndex>0 ? nextFileIndex.ToString() : "") + Path.GetExtension(baseLogFileName);
+				return Path.Combine(Path.GetDirectoryName(baseLogFileName), nextFileName );
 			}
+
+			// cache last returned base log file name to avoid excessive checks in CheckForNewLogFile.isBaseFileNameChanged
+			string __LastBaseLogFileName = null;
 
 			void CheckForNewLogFile() {
 				bool openNewFile = false;
-				if (FileLogPrv.FileSizeLimitBytes > 0 && LogFileStream.Length > FileLogPrv.FileSizeLimitBytes)
+				if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged())
 					openNewFile = true;
 
 				if (openNewFile) {
 					Close();
 					LogFileName = GetNextFileLogName();
 					OpenFile(false);
+				}
+
+				bool isMaxFileSizeThresholdReached() {
+					return FileLogPrv.FileSizeLimitBytes > 0 && LogFileStream.Length > FileLogPrv.FileSizeLimitBytes;
+				}
+				bool isBaseFileNameChanged() {
+					if (FileLogPrv.FormatLogFileName!=null) {
+						var baseLogFileName = GetBaseLogFileName();
+						if (baseLogFileName!=__LastBaseLogFileName) {
+							__LastBaseLogFileName = baseLogFileName;
+							return true;
+						}
+						return false;
+					}
+					return false;
 				}
 			}
 
