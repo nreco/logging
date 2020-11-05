@@ -70,6 +70,7 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js
 		jsonWriter.WriteStartArray();
 		jsonWriter.WriteValue(DateTime.Now.ToString("o"));
 		jsonWriter.WriteValue(msg.LogLevel.ToString());
+		jsonWriter.WriteValue(msg.LogName);
 		jsonWriter.WriteValue(msg.EventId.Id);
 		jsonWriter.WriteValue(msg.Message);
 		jsonWriter.WriteValue(msg.Exception?.ToString());
