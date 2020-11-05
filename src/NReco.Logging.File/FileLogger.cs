@@ -79,7 +79,7 @@ namespace NReco.Logging.File {
 
 			if (LoggerPrv.FormatLogEntry!=null) {
 				LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(
-					new LogMessage(logLevel, eventId, message, exception)));
+					new LogMessage(logName, logLevel, eventId, message, exception)));
 			} else {
 				// default formatting logic
 				var logBuilder = new StringBuilder();
