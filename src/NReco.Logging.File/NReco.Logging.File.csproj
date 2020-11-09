@@ -5,7 +5,7 @@
     <Title>.NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2020 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>1.1.1</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -17,8 +17,8 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
 
-.NET Core 2.x/3.x:   
-    loggingBuilder.AddFile("app.log", append:true);
+Version 1.1.1 changes:
+ - added 'logName' for FileLoggerOptions.FormatLogEntry context #15
 
 Version 1.1.0 changes:
  - added the ability to customize log file name on-the-fly with "FormatLogFileName" handler
