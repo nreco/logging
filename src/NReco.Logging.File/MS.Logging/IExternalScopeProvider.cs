@@ -8,7 +8,7 @@ namespace Nreco.Logging.File.Microsoft.Extensions.Logging
     /// <summary>
     /// Represents a storage of common scope data.
     /// </summary>
-    internal interface IExternalScopeProvider
+    public interface IExternalScopeProvider
     {
         /// <summary>
         /// Executes callback for each currently active scope objects in order of creation.

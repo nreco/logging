@@ -6,14 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
-using Microsoft.Extensions.Logging;
 
 namespace Nreco.Logging.File.Microsoft.Extensions.Logging
 {
     /// <summary>
     /// Default implemenation of <see cref="IExternalScopeProvider"/>
     /// </summary>
-    internal class LoggerExternalScopeProvider : IExternalScopeProvider
+    public class LoggerExternalScopeProvider : IExternalScopeProvider
     {
         private readonly AsyncLocal<Scope> _currentScope = new AsyncLocal<Scope>();
 
