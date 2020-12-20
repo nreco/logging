@@ -4,14 +4,6 @@
         <name>NReco.Logging.File</name>
     </assembly>
     <members>
-        <member name="T:NReco.Logging.File.ExpressionCache">
-            <summary>
-            Create and cache compiled expression to fill the dictionary from an object
-            </summary>
-            <remarks>
-            https://www.meziantou.net/asp-net-core-json-logger.htm
-            </remarks>
-        </member>
         <member name="T:NReco.Logging.File.FileLogger">
             <summary>
             Generic file logger that works in a similar way to standard ConsoleLogger.
@@ -183,6 +175,11 @@
             Current logging scope
             </summary>
         </member>
+        <member name="F:NReco.Logging.File.LogMessage.ScopeArgs">
+            <summary>
+            Collection of Key/Value pairs assigned for the current scope
+            </summary>
+        </member>
         <member name="T:NReco.Logging.File.NullScope">
             <summary>
             Empty logging scope for <see cref="T:NReco.Logging.File.FileLogger"/>
@@ -196,6 +193,22 @@
             <summary>
             File logger setup extensions
             </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggingBuilder,System.String,System.Boolean)">
+            <summary>
+            Adds a file logger.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggingBuilder,System.String,System.Action{NReco.Logging.File.FileLoggerOptions})">
+            <summary>
+            Adds a file logger.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggingBuilder,Microsoft.Extensions.Configuration.IConfiguration,System.Action{NReco.Logging.File.FileLoggerOptions})">
+            <summary>
+            Adds a file logger by specified configuration.
+            </summary>
+            <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
         </member>
         <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,System.String,System.Boolean)">
             <summary>

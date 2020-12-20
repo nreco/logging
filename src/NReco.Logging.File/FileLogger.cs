@@ -129,8 +129,7 @@ namespace NReco.Logging.File
             {
                 var logObj = new LogMessage(logName, logLevel, eventId, message, exception);
                 // Append the data of all BeginScope and LogXXX parameters to the message dictionary
-                AppendScope(logObj.Scope, state);
-                AppendScope(logObj.Scope);
+                AppendScope(logObj.ScopeList, logObj.ScopeArgs, state);
 
                 LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(logObj));
             }
@@ -163,14 +162,27 @@ namespace NReco.Logging.File
         }
 
 
-        private void AppendScope(IDictionary<string, object> dictionary)
+        private void AppendScope<TState>(List<object> scopeList, IDictionary<string, object> scopeProperties, TState state)
         {
-            ScopeProvider.ForEachScope((scope, state) => AppendScope(state, scope), dictionary);
+            ScopeProvider.ForEachScope((scope, state2) => AppendScope(scopeList, scopeProperties, scope), state);
         }
 
-        private static void AppendScope(IDictionary<string, object> dictionary, object scope)
+        /// <summary>
+        /// Add scope objects to the proper log property
+        /// </summary>
+        /// <param name="scopeList"></param>
+        /// <param name="scopeProperties"></param>
+        /// <param name="scope"></param>
+        /// <remarks>
+        /// Sematic reference
+        /// https://nblumhardt.com/2016/11/ilogger-beginscope/
+        /// </remarks>
+        private static void AppendScope(List<object> scopeList, IDictionary<string, object> scopeProperties, object scope)
         {
             if (scope == null)
+                return;
+
+            if (scope is NullScope)
                 return;
 
             // The scope can be defined using BeginScope or LogXXX methods.
@@ -178,30 +190,20 @@ namespace NReco.Logging.File
             // - logger.LogInformation("Hello {Author}", "meziaantou")
             // Using LogXXX, an object of type FormattedLogValues is created. This type is internal but it implements IReadOnlyList, so we can use it.
             // https://github.com/aspnet/Extensions/blob/cc9a033c6a8a4470984a4cc8395e42b887c07c2e/src/Logging/Logging.Abstractions/src/FormattedLogValues.cs
-            if (scope is IReadOnlyList<KeyValuePair<string, object>> formattedLogValues)
+            if (scope is IEnumerable<KeyValuePair<string, object>> formattedLogValues)
             {
-                if (formattedLogValues.Count > 0)
+                foreach (var value in formattedLogValues)
                 {
-                    foreach (var value in formattedLogValues)
-                    {
-                        // MethodInfo is set by ASP.NET Core when reaching a controller. This type cannot be serialized using JSON.NET, but I don't need it.
-                        if (value.Value is MethodInfo)
-                            continue;
+                    // MethodInfo is set by ASP.NET Core when reaching a controller. This type cannot be serialized using JSON.NET, but I don't need it.
+                    if (value.Value is MethodInfo)
+                        continue;
 
-                        dictionary[value.Key] = value.Value;
-                    }
+                    scopeProperties[value.Key] = value.Value;
                 }
             }
             else
             {
-                // The idea is to get the value of all properties of the object and add them to the dictionary.
-                //      dictionary["Prop1"] = scope.Prop1;
-                //      dictionary["Prop2"] = scope.Prop2;
-                //      ...
-                // We always log the same objects, so we can create a cache of compiled expressions to fill the dictionary.
-                // Using reflection each time would slow down the logger.
-                var appendToDictionaryMethod = ExpressionCache.GetOrCreateAppendToDictionaryMethod(scope.GetType());
-                appendToDictionaryMethod(dictionary, scope);
+                scopeList.Add(scope);
             }
         }
 

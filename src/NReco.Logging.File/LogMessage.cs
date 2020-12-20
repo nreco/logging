@@ -44,11 +44,16 @@ namespace NReco.Logging.File
         /// Log exception
         /// </summary>
         public readonly Exception Exception;
-
         /// <summary>
         /// Current logging scope
         /// </summary>
-        public readonly IDictionary<string, object> Scope;
+        public readonly IReadOnlyCollection<object> Scope;
+        /// <summary>
+        /// Collection of Key/Value pairs assigned to the current scope
+        /// </summary>
+        public readonly IDictionary<string, object> ScopeArgs;
+
+        internal List<object> ScopeList => (List<object>)Scope;
 
         internal LogMessage(string logName, LogLevel level, EventId eventId, string message, Exception ex)
         {
@@ -57,7 +62,8 @@ namespace NReco.Logging.File
             LogLevel = level;
             EventId = eventId;
             Exception = ex;
-            Scope = new Dictionary<string, object>(StringComparer.Ordinal);
+            Scope = new List<object>();
+            ScopeArgs = new Dictionary<string, object>();
         }
 
     }
