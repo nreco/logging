@@ -22,6 +22,7 @@ using System.Text;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using LocalLogging = Nreco.Logging.File.Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File
 {
@@ -32,7 +33,7 @@ namespace NReco.Logging.File
 #if NETSTANDARD2
     [ProviderAlias("File")]
 #endif
-    public class FileLoggerProvider : ILoggerProvider
+    public class FileLoggerProvider : ILoggerProvider, LocalLogging::ISupportExternalScope
     {
 
         private readonly string LogFileName;
@@ -46,6 +47,8 @@ namespace NReco.Logging.File
         private readonly bool Append = true;
         private readonly long FileSizeLimitBytes = 0;
         private readonly int MaxRollingFiles = 0;
+
+        private LocalLogging::IExternalScopeProvider scopeProvider = new LocalLogging.LoggerExternalScopeProvider();
 
         /// <summary>
         /// The minimum log level that will be written to the output
@@ -100,6 +103,11 @@ namespace NReco.Logging.File
                 TaskCreationOptions.LongRunning);
         }
 
+        void LocalLogging::ISupportExternalScope.SetScopeProvider(LocalLogging::IExternalScopeProvider scopeProvider)
+        {
+            this.scopeProvider = scopeProvider;
+        }
+
         /// <summary>
         /// Get or create a tracked logger for specified category
         /// </summary>
@@ -129,7 +137,7 @@ namespace NReco.Logging.File
 
         private FileLogger CreateLoggerImplementation(string name)
         {
-            return new FileLogger(name, this);
+            return new FileLogger(name, this, scopeProvider);
         }
 
         internal void WriteEntry(string message)

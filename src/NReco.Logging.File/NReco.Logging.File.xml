@@ -4,14 +4,61 @@
         <name>NReco.Logging.File</name>
     </assembly>
     <members>
+        <member name="T:NReco.Logging.File.ExpressionCache">
+            <summary>
+            Create and cache compiled expression to fill the dictionary from an object
+            </summary>
+            <remarks>
+            https://www.meziantou.net/asp-net-core-json-logger.htm
+            </remarks>
+        </member>
         <member name="T:NReco.Logging.File.FileLogger">
             <summary>
             Generic file logger that works in a similar way to standard ConsoleLogger.
             </summary>
         </member>
+        <member name="M:NReco.Logging.File.FileLogger.#ctor(System.String,NReco.Logging.File.FileLoggerProvider,Nreco.Logging.File.Microsoft.Extensions.Logging.IExternalScopeProvider)">
+            <summary>
+            Create new instance
+            </summary>
+            <param name="logName">Log file name</param>
+            <param name="loggerPrv">Logger provider</param>
+            <param name="scopeProvider">Scope provider</param>
+        </member>
+        <member name="M:NReco.Logging.File.FileLogger.BeginScope``1(``0)">
+            <summary>
+            Create a new logging scope
+            </summary>
+            <typeparam name="TState">Arbitrary scope object type</typeparam>
+            <param name="state">Logging scope state object</param>
+            <returns>New logging scope context</returns>
+        </member>
+        <member name="M:NReco.Logging.File.FileLogger.IsEnabled(Microsoft.Extensions.Logging.LogLevel)">
+            <summary>
+            Determine if the specified log level should be written to output
+            </summary>
+            <param name="logLevel"></param>
+            <returns>True if logLevel is greater than <see cref="P:NReco.Logging.File.FileLoggerProvider.MinLevel"/>, false otherwise </returns>
+        </member>
+        <member name="M:NReco.Logging.File.FileLogger.Log``1(Microsoft.Extensions.Logging.LogLevel,Microsoft.Extensions.Logging.EventId,``0,System.Exception,System.Func{``0,System.Exception,System.String})">
+            <summary>
+            Write message to log output
+            </summary>
+            <typeparam name="TState">Log category</typeparam>
+            <param name="logLevel">Log level</param>
+            <param name="eventId">Event ID</param>
+            <param name="state">Log state object</param>
+            <param name="exception">Log exception</param>
+            <param name="formatter">Log formatter</param>
+        </member>
         <member name="T:NReco.Logging.File.FileLoggerOptions">
             <summary>
             Generic file logger options.
+            </summary>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerOptions.Append">
+            <summary>
+            Append multiple logs to a single file
             </summary>
         </member>
         <member name="P:NReco.Logging.File.FileLoggerOptions.FileSizeLimitBytes">
@@ -54,6 +101,11 @@
             Generic file logger provider.
             </summary>
         </member>
+        <member name="P:NReco.Logging.File.FileLoggerProvider.MinLevel">
+            <summary>
+            The minimum log level that will be written to the output
+            </summary>
+        </member>
         <member name="P:NReco.Logging.File.FileLoggerProvider.FormatLogEntry">
             <summary>
             Custom formatter for log entry. 
@@ -62,6 +114,87 @@
         <member name="P:NReco.Logging.File.FileLoggerProvider.FormatLogFileName">
             <summary>
             Custom formatter for the log file name.
+            </summary>
+        </member>
+        <member name="M:NReco.Logging.File.FileLoggerProvider.#ctor(System.String)">
+            <summary>
+            Create new instance
+            </summary>
+            <param name="fileName">Log output file name</param>
+        </member>
+        <member name="M:NReco.Logging.File.FileLoggerProvider.#ctor(System.String,System.Boolean)">
+            <summary>
+            Create new instance
+            </summary>
+            <param name="fileName">Output file name</param>
+            <param name="append">Determine if multiple log messages should be added to a single file</param>
+        </member>
+        <member name="M:NReco.Logging.File.FileLoggerProvider.#ctor(System.String,NReco.Logging.File.FileLoggerOptions)">
+            <summary>
+            Create new instance
+            </summary>
+            <param name="fileName">Output file name</param>
+            <param name="options">Logger options</param>
+        </member>
+        <member name="M:NReco.Logging.File.FileLoggerProvider.CreateLogger(System.String)">
+            <summary>
+            Get or create a tracked logger for specified category
+            </summary>
+            <param name="categoryName"></param>
+            <returns>Logger associated with the specified category</returns>
+        </member>
+        <member name="M:NReco.Logging.File.FileLoggerProvider.Dispose">
+            <summary>
+            Wait for pending logs to be flushed to output and remove tracked loggers
+            </summary>
+        </member>
+        <member name="T:NReco.Logging.File.LogMessage">
+            <summary>
+            Logger message 
+            </summary>
+        </member>
+        <member name="F:NReco.Logging.File.LogMessage.LogName">
+            <summary>
+            Log name
+            </summary>
+        </member>
+        <member name="F:NReco.Logging.File.LogMessage.Message">
+            <summary>
+            Log message
+            </summary>
+        </member>
+        <member name="F:NReco.Logging.File.LogMessage.LogLevel">
+            <summary>
+            Log level
+            </summary>
+        </member>
+        <member name="F:NReco.Logging.File.LogMessage.EventId">
+            <summary>
+            Event ID
+            </summary>
+        </member>
+        <member name="F:NReco.Logging.File.LogMessage.Exception">
+            <summary>
+            Log exception
+            </summary>
+        </member>
+        <member name="F:NReco.Logging.File.LogMessage.Scope">
+            <summary>
+            Current logging scope
+            </summary>
+        </member>
+        <member name="T:NReco.Logging.File.NullScope">
+            <summary>
+            Empty logging scope for <see cref="T:NReco.Logging.File.FileLogger"/>
+            </summary>
+            <remarks>
+            https://www.meziantou.net/asp-net-core-json-logger.htm
+            In ASP.NET Core 3.0 this classes is now internal. This means you need to add it to your code.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.Extensions.Logging.FileLoggerExtensions">
+            <summary>
+            File logger setup extensions
             </summary>
         </member>
         <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,System.String,System.Boolean)">
@@ -78,19 +211,50 @@
             </summary>
             <param name="factory">The <see cref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
             <param name="configuration">The <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> to use getting <see cref="T:NReco.Logging.File.FileLoggerProvider"/> settings.</param>
+            <param name="configure">Callback to configure logging options</param>
         </member>
-    </members>
-</doc>
-ref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
-            <param name="fileName">log file name.</param>
-            <param name="append">if true new log entries are appended to the existing file.</param>	 
-        </member>
-        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,Microsoft.Extensions.Configuration.IConfiguration,System.Action{NReco.Logging.File.FileLoggerOptions})">
+        <member name="T:Nreco.Logging.File.Microsoft.Extensions.Logging.IExternalScopeProvider">
             <summary>
-            Adds a file logger and configures it with given <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> (usually "Logging" section).
+            Represents a storage of common scope data.
             </summary>
-            <param name="factory">The <see cref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
-            <param name="configuration">The <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> to use getting <see cref="T:NReco.Logging.File.FileLoggerProvider"/> settings.</param>
+        </member>
+        <member name="M:Nreco.Logging.File.Microsoft.Extensions.Logging.IExternalScopeProvider.ForEachScope``1(System.Action{System.Object,``0},``0)">
+            <summary>
+            Executes callback for each currently active scope objects in order of creation.
+            All callbacks are guaranteed to be called inline from this method.
+            </summary>
+            <param name="callback">The callback to be executed for every scope object</param>
+            <param name="state">The state object to be passed into the callback</param>
+            <typeparam name="TState"></typeparam>
+        </member>
+        <member name="M:Nreco.Logging.File.Microsoft.Extensions.Logging.IExternalScopeProvider.Push(System.Object)">
+            <summary>
+            Adds scope object to the list
+            </summary>
+            <param name="state">The scope object</param>
+            <returns>The <see cref="T:System.IDisposable"/> token that removes scope on dispose.</returns>
+        </member>
+        <member name="T:Nreco.Logging.File.Microsoft.Extensions.Logging.ISupportExternalScope">
+            <summary>
+            Represents a <see cref="T:Microsoft.Extensions.Logging.ILoggerProvider"/> that is able to consume external scope information.
+            </summary>
+        </member>
+        <member name="M:Nreco.Logging.File.Microsoft.Extensions.Logging.ISupportExternalScope.SetScopeProvider(Nreco.Logging.File.Microsoft.Extensions.Logging.IExternalScopeProvider)">
+            <summary>
+            Sets external scope information source for logger provider.
+            </summary>
+            <param name="scopeProvider"></param>
+        </member>
+        <member name="T:Nreco.Logging.File.Microsoft.Extensions.Logging.LoggerExternalScopeProvider">
+            <summary>
+            Default implemenation of <see cref="T:Nreco.Logging.File.Microsoft.Extensions.Logging.IExternalScopeProvider"/>
+            </summary>
+        </member>
+        <member name="M:Nreco.Logging.File.Microsoft.Extensions.Logging.LoggerExternalScopeProvider.ForEachScope``1(System.Action{System.Object,``0},``0)">
+            <inheritdoc />
+        </member>
+        <member name="M:Nreco.Logging.File.Microsoft.Extensions.Logging.LoggerExternalScopeProvider.Push(System.Object)">
+            <inheritdoc />
         </member>
     </members>
 </doc>

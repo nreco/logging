@@ -45,6 +45,11 @@ namespace NReco.Logging.File
         /// </summary>
         public readonly Exception Exception;
 
+        /// <summary>
+        /// Current logging scope
+        /// </summary>
+        public readonly IDictionary<string, object> Scope;
+
         internal LogMessage(string logName, LogLevel level, EventId eventId, string message, Exception ex)
         {
             LogName = logName;
@@ -52,6 +57,7 @@ namespace NReco.Logging.File
             LogLevel = level;
             EventId = eventId;
             Exception = ex;
+            Scope = new Dictionary<string, object>(StringComparer.Ordinal);
         }
 
     }

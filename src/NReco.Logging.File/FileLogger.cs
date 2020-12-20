@@ -22,6 +22,9 @@ using System.Text;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
+using System.Reflection;
+using System.Linq.Expressions;
+using LocalLogging = Nreco.Logging.File.Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File
 {
@@ -35,26 +38,30 @@ namespace NReco.Logging.File
         private readonly string logName;
         private readonly FileLoggerProvider LoggerPrv;
 
+        internal LocalLogging::IExternalScopeProvider ScopeProvider { get; set; }
+
         /// <summary>
         /// Create new instance
         /// </summary>
         /// <param name="logName">Log file name</param>
-        /// <param name="loggerPrv"></param>
-        public FileLogger(string logName, FileLoggerProvider loggerPrv)
+        /// <param name="loggerPrv">Logger provider</param>
+        /// <param name="scopeProvider">Scope provider</param>
+        public FileLogger(string logName, FileLoggerProvider loggerPrv, LocalLogging::IExternalScopeProvider scopeProvider)
         {
             this.logName = logName;
             this.LoggerPrv = loggerPrv;
+            this.ScopeProvider = scopeProvider;
         }
 
         /// <summary>
-        /// Create a new logging scope (nop)
+        /// Create a new logging scope
         /// </summary>
         /// <typeparam name="TState">Arbitrary scope object type</typeparam>
         /// <param name="state">Logging scope state object</param>
-        /// <returns>NULL</returns>
+        /// <returns>New logging scope context</returns>
         public IDisposable BeginScope<TState>(TState state)
         {
-            return null;
+            return ScopeProvider?.Push(state) ?? NullScope.Instance;
         }
 
         /// <summary>
@@ -120,8 +127,12 @@ namespace NReco.Logging.File
 
             if (LoggerPrv.FormatLogEntry != null)
             {
-                LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(
-                    new LogMessage(logName, logLevel, eventId, message, exception)));
+                var logObj = new LogMessage(logName, logLevel, eventId, message, exception);
+                // Append the data of all BeginScope and LogXXX parameters to the message dictionary
+                AppendScope(logObj.Scope, state);
+                AppendScope(logObj.Scope);
+
+                LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(logObj));
             }
             else
             {
@@ -150,6 +161,50 @@ namespace NReco.Logging.File
                 LoggerPrv.WriteEntry(logBuilder.ToString());
             }
         }
+
+
+        private void AppendScope(IDictionary<string, object> dictionary)
+        {
+            ScopeProvider.ForEachScope((scope, state) => AppendScope(state, scope), dictionary);
+        }
+
+        private static void AppendScope(IDictionary<string, object> dictionary, object scope)
+        {
+            if (scope == null)
+                return;
+
+            // The scope can be defined using BeginScope or LogXXX methods.
+            // - logger.BeginScope(new { Author = "meziantou" })
+            // - logger.LogInformation("Hello {Author}", "meziaantou")
+            // Using LogXXX, an object of type FormattedLogValues is created. This type is internal but it implements IReadOnlyList, so we can use it.
+            // https://github.com/aspnet/Extensions/blob/cc9a033c6a8a4470984a4cc8395e42b887c07c2e/src/Logging/Logging.Abstractions/src/FormattedLogValues.cs
+            if (scope is IReadOnlyList<KeyValuePair<string, object>> formattedLogValues)
+            {
+                if (formattedLogValues.Count > 0)
+                {
+                    foreach (var value in formattedLogValues)
+                    {
+                        // MethodInfo is set by ASP.NET Core when reaching a controller. This type cannot be serialized using JSON.NET, but I don't need it.
+                        if (value.Value is MethodInfo)
+                            continue;
+
+                        dictionary[value.Key] = value.Value;
+                    }
+                }
+            }
+            else
+            {
+                // The idea is to get the value of all properties of the object and add them to the dictionary.
+                //      dictionary["Prop1"] = scope.Prop1;
+                //      dictionary["Prop2"] = scope.Prop2;
+                //      ...
+                // We always log the same objects, so we can create a cache of compiled expressions to fill the dictionary.
+                // Using reflection each time would slow down the logger.
+                var appendToDictionaryMethod = ExpressionCache.GetOrCreateAppendToDictionaryMethod(scope.GetType());
+                appendToDictionaryMethod(dictionary, scope);
+            }
+        }
+
     }
 
 
