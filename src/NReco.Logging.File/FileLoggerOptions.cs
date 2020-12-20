@@ -30,6 +30,9 @@ namespace NReco.Logging.File {
 	/// </summary>
 	public class FileLoggerOptions {
 
+		/// <summary>
+		/// Append multiple logs to a single file
+		/// </summary>
 		public bool Append { get; set; } = true;
 
 		/// <summary>

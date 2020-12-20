@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>NReco.Logging.File</name>
+    </assembly>
+    <members>
+        <member name="T:NReco.Logging.File.FileLogger">
+            <summary>
+            Generic file logger that works in a similar way to standard ConsoleLogger.
+            </summary>
+        </member>
+        <member name="T:NReco.Logging.File.FileLoggerOptions">
+            <summary>
+            Generic file logger options.
+            </summary>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerOptions.FileSizeLimitBytes">
+            <summary>
+            Determines max size of the one log file.
+            </summary>
+            <remarks>If log file limit is specified logger will create new file when limit is reached. 
+            For example, if log file name is 'test.log', logger will create 'test1.log', 'test2.log' etc.
+            </remarks>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerOptions.MaxRollingFiles">
+            <summary>
+            Determines max number of log files if <see cref="P:NReco.Logging.File.FileLoggerOptions.FileSizeLimitBytes"/> is specified.
+            </summary>
+            <remarks>If MaxRollingFiles is specified file logger will re-write previously created log files.
+            For example, if log file name is 'test.log' and max files = 3, logger will use: 'test.log', then 'test1.log', then 'test2.log' and then 'test.log' again (old content is removed).
+            </remarks>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerOptions.FormatLogEntry">
+            <summary>
+            Custom formatter for the log entry line. 
+            </summary>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerOptions.FormatLogFileName">
+            <summary>
+            Custom formatter for the log file name.
+            </summary>
+            <remarks>By specifying custom formatting handler you can define your own criteria for creation of log files. Note that this handler is called
+            on EVERY log message 'write'; you may cache the log file name calculation in your handler to avoid any potential overhead in case of high-load logger usage.
+            For example:
+            </remarks>
+            <example>
+            fileLoggerOpts.FormatLogFileName = (fname) => {
+              return String.Format( Path.GetFileNameWithoutExtension(fname) + "_{0:yyyy}-{0:MM}-{0:dd}" + Path.GetExtension(fname), DateTime.UtcNow); 
+            };
+            </example>
+        </member>
+        <member name="T:NReco.Logging.File.FileLoggerProvider">
+            <summary>
+            Generic file logger provider.
+            </summary>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerProvider.FormatLogEntry">
+            <summary>
+            Custom formatter for log entry. 
+            </summary>
+        </member>
+        <member name="P:NReco.Logging.File.FileLoggerProvider.FormatLogFileName">
+            <summary>
+            Custom formatter for the log file name.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,System.String,System.Boolean)">
+            <summary>
+            Adds a file logger.
+            </summary>
+            <param name="factory">The <see cref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
+            <param name="fileName">log file name.</param>
+            <param name="append">if true new log entries are appended to the existing file.</param>	 
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,Microsoft.Extensions.Configuration.IConfiguration,System.Action{NReco.Logging.File.FileLoggerOptions})">
+            <summary>
+            Adds a file logger and configures it with given <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> (usually "Logging" section).
+            </summary>
+            <param name="factory">The <see cref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
+            <param name="configuration">The <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> to use getting <see cref="T:NReco.Logging.File.FileLoggerProvider"/> settings.</param>
+        </member>
+    </members>
+</doc>
+ref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
+            <param name="fileName">log file name.</param>
+            <param name="append">if true new log entries are appended to the existing file.</param>	 
+        </member>
+        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,Microsoft.Extensions.Configuration.IConfiguration,System.Action{NReco.Logging.File.FileLoggerOptions})">
+            <summary>
+            Adds a file logger and configures it with given <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> (usually "Logging" section).
+            </summary>
+            <param name="factory">The <see cref="T:Microsoft.Extensions.Logging.ILoggerFactory"/> to use.</param>
+            <param name="configuration">The <see cref="T:Microsoft.Extensions.Configuration.IConfiguration"/> to use getting <see cref="T:NReco.Logging.File.FileLoggerProvider"/> settings.</param>
+        </member>
+    </members>
+</doc>

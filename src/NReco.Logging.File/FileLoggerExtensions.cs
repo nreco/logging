@@ -22,77 +22,92 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NReco.Logging.File;
 
-namespace Microsoft.Extensions.Logging {
+namespace Microsoft.Extensions.Logging
+{
 
-	public static class FileLoggerExtensions {
+    /// <summary>
+    /// File logger setup extensions
+    /// </summary>
+    public static class FileLoggerExtensions
+    {
 
 #if NETSTANDARD2
 
-		/// <summary>
-		/// Adds a file logger.
-		/// </summary>
-		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string fileName, bool append = true) {
-			builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>( 
-				(srvPrv) => {
-					return new FileLoggerProvider(fileName, append);
-				}
-			));
-			return builder;
-		}
+        /// <summary>
+        /// Adds a file logger.
+        /// </summary>
+        public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string fileName, bool append = true)
+        {
+            builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>(
+                (srvPrv) =>
+                {
+                    return new FileLoggerProvider(fileName, append);
+                }
+            ));
+            return builder;
+        }
 
-		/// <summary>
-		/// Adds a file logger.
-		/// </summary>
-		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string fileName, Action<FileLoggerOptions> configure) {
-			builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>(
-				(srvPrv) => {
-					var options = new FileLoggerOptions();
-					configure(options);
-					return new FileLoggerProvider(fileName, options);
-				}
-			));
-			return builder;
-		}
+        /// <summary>
+        /// Adds a file logger.
+        /// </summary>
+        public static ILoggingBuilder AddFile(this ILoggingBuilder builder, string fileName, Action<FileLoggerOptions> configure)
+        {
+            builder.Services.Add(ServiceDescriptor.Singleton<ILoggerProvider, FileLoggerProvider>(
+                (srvPrv) =>
+                {
+                    var options = new FileLoggerOptions();
+                    configure(options);
+                    return new FileLoggerProvider(fileName, options);
+                }
+            ));
+            return builder;
+        }
 
-		/// <summary>
-		/// Adds a file logger by specified configuration.
-		/// </summary>
-		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
-		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, IConfiguration configuration, Action<FileLoggerOptions> configure = null) {
-			var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
-			if (fileLoggerPrv != null) {
-				builder.Services.AddSingleton<ILoggerProvider,FileLoggerProvider>(
-					(srvPrv) => {
-						return fileLoggerPrv;
-					}
-				);
-			}
-			return builder;
-		}
+        /// <summary>
+        /// Adds a file logger by specified configuration.
+        /// </summary>
+        /// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
+        public static ILoggingBuilder AddFile(this ILoggingBuilder builder, IConfiguration configuration, Action<FileLoggerOptions> configure = null)
+        {
+            var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
+            if (fileLoggerPrv != null)
+            {
+                _ = builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>(
+                    (srvPrv) =>
+                    {
+                        return fileLoggerPrv;
+                    }
+                );
+            }
+            return builder;
+        }
 
 #endif
 
-		/// <summary>
-		/// Adds a file logger.
-		/// </summary>
-		/// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
-		/// <param name="fileName">log file name.</param>
-		/// <param name="append">if true new log entries are appended to the existing file.</param>	 
-		public static ILoggerFactory AddFile(this ILoggerFactory factory, string fileName, bool append = true) {
-			factory.AddProvider(new FileLoggerProvider(fileName, append));
-			return factory;
-		}
+        /// <summary>
+        /// Adds a file logger.
+        /// </summary>
+        /// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
+        /// <param name="fileName">log file name.</param>
+        /// <param name="append">if true new log entries are appended to the existing file.</param>	 
+        public static ILoggerFactory AddFile(this ILoggerFactory factory, string fileName, bool append = true)
+        {
+            factory.AddProvider(new FileLoggerProvider(fileName, append));
+            return factory;
+        }
 
-		/// <summary>
-		/// Adds a file logger and configures it with given <see cref="IConfiguration"/> (usually "Logging" section).
-		/// </summary>
-		/// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
-		/// <param name="configuration">The <see cref="IConfiguration"/> to use getting <see cref="FileLoggerProvider"/> settings.</param>
-		public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration, Action<FileLoggerOptions> configure = null) {
-			var prvFactory = factory;
-			var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
-			if (fileLoggerPrv == null)
-				return factory;
+        /// <summary>
+        /// Adds a file logger and configures it with given <see cref="IConfiguration"/> (usually "Logging" section).
+        /// </summary>
+        /// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
+        /// <param name="configuration">The <see cref="IConfiguration"/> to use getting <see cref="FileLoggerProvider"/> settings.</param>
+        /// <param name="configure">Callback to configure logging options</param>
+        public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration, Action<FileLoggerOptions> configure = null)
+        {
+            var prvFactory = factory;
+            var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
+            if (fileLoggerPrv == null)
+                return factory;
 #if NETSTANDARD1
 			var loggerSettings = new FilterLoggerSettings();
 			var logLevelsCfg = configuration.GetSection("LogLevel");
@@ -110,38 +125,38 @@ namespace Microsoft.Extensions.Logging {
 				prvFactory = prvFactory.WithFilter(loggerSettings);
 #endif
 
-			prvFactory.AddProvider(fileLoggerPrv);
-			return factory;
-		}
+            prvFactory.AddProvider(fileLoggerPrv);
+            return factory;
+        }
 
-		private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration, Action<FileLoggerOptions> configure) {
-			var fileSection = configuration.GetSection("File");
-			if (fileSection == null)
-				return null;  // file logger is not configured
-			var fileName = fileSection["Path"];
-			if (String.IsNullOrWhiteSpace(fileName))
-				return null; // file logger is not configured
+        private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration, Action<FileLoggerOptions> configure)
+        {
+            var fileSection = configuration.GetSection("File");
+            if (fileSection == null)
+                return null;  // file logger is not configured
+            var fileName = fileSection["Path"];
+            if (String.IsNullOrWhiteSpace(fileName))
+                return null; // file logger is not configured
 
-			var fileLoggerOptions = new FileLoggerOptions();
-			var appendVal = fileSection["Append"];
-			if (!String.IsNullOrEmpty(appendVal) && bool.TryParse(appendVal, out var append))
-				fileLoggerOptions.Append = append;
+            var fileLoggerOptions = new FileLoggerOptions();
+            var appendVal = fileSection["Append"];
+            if (!String.IsNullOrEmpty(appendVal) && bool.TryParse(appendVal, out var append))
+                fileLoggerOptions.Append = append;
 
-			var fileLimitVal = fileSection["FileSizeLimitBytes"];
-			if (!String.IsNullOrEmpty(fileLimitVal) && Int64.TryParse(fileLimitVal, out var fileLimit))
-				fileLoggerOptions.FileSizeLimitBytes = fileLimit;
+            var fileLimitVal = fileSection["FileSizeLimitBytes"];
+            if (!String.IsNullOrEmpty(fileLimitVal) && Int64.TryParse(fileLimitVal, out var fileLimit))
+                fileLoggerOptions.FileSizeLimitBytes = fileLimit;
 
-			var maxFilesVal = fileSection["MaxRollingFiles"];
-			if (!String.IsNullOrEmpty(maxFilesVal) && Int32.TryParse(maxFilesVal, out var maxFiles))
-				fileLoggerOptions.MaxRollingFiles = maxFiles;
+            var maxFilesVal = fileSection["MaxRollingFiles"];
+            if (!String.IsNullOrEmpty(maxFilesVal) && Int32.TryParse(maxFilesVal, out var maxFiles))
+                fileLoggerOptions.MaxRollingFiles = maxFiles;
 
-			if (configure != null)
-				configure(fileLoggerOptions);
+            configure?.Invoke(fileLoggerOptions);
 
-			return new FileLoggerProvider(fileName, fileLoggerOptions);
-		}
+            return new FileLoggerProvider(fileName, fileLoggerOptions);
+        }
 
 
-	}
+    }
 
 }

@@ -19,20 +19,40 @@ using Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File
 {
-	public struct LogMessage {
-		public readonly string LogName;
-		public readonly string Message;
-		public readonly LogLevel LogLevel;
-		public readonly EventId EventId;
-		public readonly Exception Exception;
+    /// <summary>
+    /// Logger message 
+    /// </summary>
+    public struct LogMessage
+    {
+        /// <summary>
+        /// Log name
+        /// </summary>
+        public readonly string LogName;
+        /// <summary>
+        /// Log message
+        /// </summary>
+        public readonly string Message;
+        /// <summary>
+        /// Log level
+        /// </summary>
+        public readonly LogLevel LogLevel;
+        /// <summary>
+        /// Event ID
+        /// </summary>
+        public readonly EventId EventId;
+        /// <summary>
+        /// Log exception
+        /// </summary>
+        public readonly Exception Exception;
 
-		internal LogMessage(string logName, LogLevel level, EventId eventId, string message, Exception ex) {
-			LogName = logName;
-			Message = message;
-			LogLevel = level;
-			EventId = eventId;
-			Exception = ex;
-		}
+        internal LogMessage(string logName, LogLevel level, EventId eventId, string message, Exception ex)
+        {
+            LogName = logName;
+            Message = message;
+            LogLevel = level;
+            EventId = eventId;
+            Exception = ex;
+        }
 
-	}
+    }
 }

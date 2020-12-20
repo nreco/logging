@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>Standalone file logging provider for .NET Core without dependencies on the logging frameworks.</Description>
     <Title>.NET Core file logger provider.</Title>
-	<Copyright>Copyright (c) 2017-2020 Vitalii Fedorchenko and contributors</Copyright>
+    <Copyright>Copyright (c) 2017-2020 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
     <VersionPrefix>1.1.1</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
@@ -15,21 +15,23 @@
     <PackageIconUrl>https://www.nrecosite.com/img/nreco-logo-200.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
-	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+    <PackageReleaseNotes>
+      How to use: https://github.com/nreco/logging
 
-Version 1.1.1 changes:
- - added 'logName' for FileLoggerOptions.FormatLogEntry context #15
+      Version 1.1.1 changes:
+      - added 'logName' for FileLoggerOptions.FormatLogEntry context #15
 
-Version 1.1.0 changes:
- - added the ability to customize log file name on-the-fly with "FormatLogFileName" handler
+      Version 1.1.0 changes:
+      - added the ability to customize log file name on-the-fly with "FormatLogFileName" handler
 
-Version 1.0.5 changes:
- - log file folder is created automatically if not exists
- - environment variables are expanded in the file path
-	
-Version 1.0.4 changes:
- - added "File" provider alias for MVC Core 2 filtering rules
- - added 'rolling file' behaviour controlled with new FileLoggerProvider properties (FileSizeLimitBytes and MaxRollingFiles)</PackageReleaseNotes>
+      Version 1.0.5 changes:
+      - log file folder is created automatically if not exists
+      - environment variables are expanded in the file path
+
+      Version 1.0.4 changes:
+      - added "File" provider alias for MVC Core 2 filtering rules
+      - added 'rolling file' behaviour controlled with new FileLoggerProvider properties (FileSizeLimitBytes and MaxRollingFiles)
+    </PackageReleaseNotes>
     <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
     <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
@@ -41,29 +43,34 @@ Version 1.0.4 changes:
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile>
+    <DocumentationFile>./NReco.Logging.File.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <DefineConstants>$(DefineConstants);NETSTANDARD2</DefineConstants>
-  </PropertyGroup>   
+  </PropertyGroup>
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
     <DefineConstants>$(DefineConstants);NETSTANDARD1</DefineConstants>
-  </PropertyGroup>   
-  
+  </PropertyGroup>
+
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.0.0" />
   </ItemGroup>
-    
+
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.0" />
-	<PackageReference Include="Microsoft.Extensions.Logging.Filter" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Filter" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.0" />
     <PackageReference Include="System.IO" Version="4.3.0" />
-    <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />	
+    <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
     <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
-    <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />	
+    <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="NReco.Logging.File.xml" />
   </ItemGroup>
 
 </Project>
