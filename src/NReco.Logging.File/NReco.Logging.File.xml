@@ -43,6 +43,18 @@
             <param name="exception">Log exception</param>
             <param name="formatter">Log formatter</param>
         </member>
+        <member name="M:NReco.Logging.File.FileLogger.AppendScope(System.Collections.Generic.List{System.Object},System.Collections.Generic.IDictionary{System.String,System.Object},System.Object)">
+            <summary>
+            Add scope objects to the proper log property
+            </summary>
+            <param name="scopeList"></param>
+            <param name="scopeProperties"></param>
+            <param name="scope"></param>
+            <remarks>
+            Sematic reference
+            https://nblumhardt.com/2016/11/ilogger-beginscope/
+            </remarks>
+        </member>
         <member name="T:NReco.Logging.File.FileLoggerOptions">
             <summary>
             Generic file logger options.
@@ -177,7 +189,7 @@
         </member>
         <member name="F:NReco.Logging.File.LogMessage.ScopeArgs">
             <summary>
-            Collection of Key/Value pairs assigned for the current scope
+            Collection of Key/Value pairs assigned to the current scope
             </summary>
         </member>
         <member name="T:NReco.Logging.File.NullScope">
@@ -193,22 +205,6 @@
             <summary>
             File logger setup extensions
             </summary>
-        </member>
-        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggingBuilder,System.String,System.Boolean)">
-            <summary>
-            Adds a file logger.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggingBuilder,System.String,System.Action{NReco.Logging.File.FileLoggerOptions})">
-            <summary>
-            Adds a file logger.
-            </summary>
-        </member>
-        <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggingBuilder,Microsoft.Extensions.Configuration.IConfiguration,System.Action{NReco.Logging.File.FileLoggerOptions})">
-            <summary>
-            Adds a file logger by specified configuration.
-            </summary>
-            <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
         </member>
         <member name="M:Microsoft.Extensions.Logging.FileLoggerExtensions.AddFile(Microsoft.Extensions.Logging.ILoggerFactory,System.String,System.Boolean)">
             <summary>

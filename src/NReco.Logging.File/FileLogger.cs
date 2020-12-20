@@ -129,7 +129,10 @@ namespace NReco.Logging.File
             {
                 var logObj = new LogMessage(logName, logLevel, eventId, message, exception);
                 // Append the data of all BeginScope and LogXXX parameters to the message dictionary
-                AppendScope(logObj.ScopeList, logObj.ScopeArgs, state);
+                AppendScope(
+                    logObj.ScopeList,
+                    logObj.ScopeArgs,
+                    state);
 
                 LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(logObj));
             }
@@ -162,7 +165,10 @@ namespace NReco.Logging.File
         }
 
 
-        private void AppendScope<TState>(List<object> scopeList, IDictionary<string, object> scopeProperties, TState state)
+        private void AppendScope<TState>(
+            List<object> scopeList,
+            IDictionary<string, object> scopeProperties,
+            TState state)
         {
             ScopeProvider.ForEachScope((scope, state2) => AppendScope(scopeList, scopeProperties, scope), state);
         }
@@ -177,7 +183,10 @@ namespace NReco.Logging.File
         /// Sematic reference
         /// https://nblumhardt.com/2016/11/ilogger-beginscope/
         /// </remarks>
-        private static void AppendScope(List<object> scopeList, IDictionary<string, object> scopeProperties, object scope)
+        private static void AppendScope(
+            List<object> scopeList,
+            IDictionary<string, object> scopeProperties,
+            object scope)
         {
             if (scope == null)
                 return;
@@ -192,13 +201,32 @@ namespace NReco.Logging.File
             // https://github.com/aspnet/Extensions/blob/cc9a033c6a8a4470984a4cc8395e42b887c07c2e/src/Logging/Logging.Abstractions/src/FormattedLogValues.cs
             if (scope is IEnumerable<KeyValuePair<string, object>> formattedLogValues)
             {
+                var strTemplate = new StringBuilder();
                 foreach (var value in formattedLogValues)
                 {
                     // MethodInfo is set by ASP.NET Core when reaching a controller. This type cannot be serialized using JSON.NET, but I don't need it.
                     if (value.Value is MethodInfo)
                         continue;
 
-                    scopeProperties[value.Key] = value.Value;
+                    if (value.Key == "{OriginalFormat}")
+                    {
+                        if (value.Value is string strTmp)
+                        {
+                            strTemplate.Append(strTmp);
+                        }
+                    }
+                    else
+                    {
+                        scopeProperties[value.Key] = value.Value;
+                    }
+                }
+                if (strTemplate.Length > 0)
+                {
+                    foreach (var scopeArg in scopeProperties)
+                    {
+                        _ = strTemplate.Replace("{" + scopeArg.Key + "}", scopeArg.Value.ToString());
+                    }
+                    scopeList.Add(strTemplate.ToString());
                 }
             }
             else
