@@ -54,6 +54,11 @@ namespace NReco.Logging.File {
 		public Func<LogMessage, string> FormatLogEntry { get; set; }
 
 		/// <summary>
+		/// Minimal logging level for the file logger.
+		/// </summary>
+		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
+
+		/// <summary>
 		/// Custom formatter for the log file name.
 		/// </summary>
 		/// <remarks>By specifying custom formatting handler you can define your own criteria for creation of log files. Note that this handler is called

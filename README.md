@@ -34,6 +34,7 @@ Example of the configuration section in appsettings.json:
 	"File": {
 		"Path": "app.log",
 		"Append": "True",
+		"MinLevel": "Warning",  // min level for the file logger
 		"FileSizeLimitBytes": 0,  // use to activate rolling file behaviour
 		"MaxRollingFiles": 0  // use to specify max number of log files
 	}
@@ -45,6 +46,7 @@ This feature is activated with `FileLoggerOptions` properties: `FileSizeLimitByt
 
 * if only `FileSizeLimitBytes` is specified file logger will create "test.log", "test1.log", "test2.log" etc
 * use `MaxRollingFiles` in addition to `FileSizeLimitBytes` to limit number of log files; for example, for value "3" file logger will create "test.log", "test1.log", "test2.log" and again "test.log", "test1.log" (old files will be overwritten).
+* if file name is changed in time (with `FormatLogFileName` handler) max number of files works only for the same file name. For example, if file name is based on date, `MaxRollingFiles` will limit number of log files only for the concrete date.
 
 ## Change log file name on-the-fly
 It is possible to specify a custom log file name formatter with `FileLoggerOptions` property `FormatLogFileName`. Log file name may change in time - for example, to create a new log file per day:

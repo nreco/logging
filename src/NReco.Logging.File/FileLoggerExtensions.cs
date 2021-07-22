@@ -127,6 +127,10 @@ namespace Microsoft.Extensions.Logging {
 			if (!String.IsNullOrEmpty(appendVal) && bool.TryParse(appendVal, out var append))
 				fileLoggerOptions.Append = append;
 
+			var minLevelStr = fileSection["MinLevel"];
+			if (!String.IsNullOrEmpty(minLevelStr) && Enum.TryParse<LogLevel>(minLevelStr, true, out var minLevel))
+				fileLoggerOptions.MinLevel = minLevel;
+
 			var fileLimitVal = fileSection["FileSizeLimitBytes"];
 			if (!String.IsNullOrEmpty(fileLimitVal) && Int64.TryParse(fileLimitVal, out var fileLimit))
 				fileLoggerOptions.FileSizeLimitBytes = fileLimit;

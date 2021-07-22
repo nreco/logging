@@ -45,7 +45,7 @@ namespace NReco.Logging.File {
 		private readonly long FileSizeLimitBytes = 0;
 		private readonly int MaxRollingFiles = 0;
 
-		public LogLevel MinLevel { get; set; } = LogLevel.Debug;
+		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
 
 		/// <summary>
 		/// Custom formatter for log entry. 
@@ -70,6 +70,7 @@ namespace NReco.Logging.File {
 			MaxRollingFiles = options.MaxRollingFiles;
 			FormatLogEntry = options.FormatLogEntry;
 			FormatLogFileName = options.FormatLogFileName;
+			MinLevel = options.MinLevel;
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(
