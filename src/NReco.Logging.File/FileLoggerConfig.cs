@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 /*
  * NReco file logging provider (https://github.com/nreco/logging)
  * Copyright 2017-2018 Vitaliy Fedorchenko
@@ -27,10 +27,15 @@ namespace NReco.Logging.File
 {
 
     /// <summary>
-    /// Generic file logger options.
+    /// Generic file logger Configuration.
     /// </summary>
-    public class FileLoggerOptions
+    public class FileLoggerConfig
     {
+        /// <summary>
+        /// Path of the LogFile to use.
+        /// </summary>
+        public string Path { get; set; } = null;
+
         /// <summary>
         /// Append to existing log files or override them.
         /// </summary>
@@ -53,28 +58,9 @@ namespace NReco.Logging.File
         public int MaxRollingFiles { get; set; } = 0;
 
         /// <summary>
-        /// Custom formatter for the log entry line. 
-        /// </summary>
-        public Func<LogMessage, string> FormatLogEntry { get; set; }
-
-        /// <summary>
         /// Minimal logging level for the file logger.
         /// </summary>
         public LogLevel MinLevel { get; set; } = LogLevel.Trace;
-
-        /// <summary>
-        /// Custom formatter for the log file name.
-        /// </summary>
-        /// <remarks>By specifying custom formatting handler you can define your own criteria for creation of log files. Note that this handler is called
-        /// on EVERY log message 'write'; you may cache the log file name calculation in your handler to avoid any potential overhead in case of high-load logger usage.
-        /// For example:
-        /// </remarks>
-        /// <example>
-        /// fileLoggerOpts.FormatLogFileName = (fname) => {
-        ///   return String.Format( Path.GetFileNameWithoutExtension(fname) + "_{0:yyyy}-{0:MM}-{0:dd}" + Path.GetExtension(fname), DateTime.UtcNow); 
-        /// };
-        /// </example>
-        public Func<string, string> FormatLogFileName { get; set; }
     }
 
 
