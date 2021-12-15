@@ -130,6 +130,74 @@ namespace NReco.Logging.Tests
 			}
 		}
 
+
+		/// <summary>
+		/// As WriteRollingFile but checks for stability if some files are in use
+		/// </summary>
+		[Fact]
+		public void StabilityWhenFilesInUse() {
+			var tmpFileDir = Path.GetTempFileName();  // for test debug: "./"
+			System.IO.File.Delete(tmpFileDir);
+
+			Directory.CreateDirectory(tmpFileDir);
+			LoggerFactory factory = null;
+			ILogger logger = null;
+			var logFile = Path.Combine(tmpFileDir, "test.log");
+			try {
+
+
+				// We lock files test.log and test1.log so they can't be touched by the logger
+				using (FileStream fs_lockingFile0 = new FileStream(logFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+				{
+					using (FileStream fs_lockingFile1 = new FileStream(Path.Combine(tmpFileDir, "test1.log"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+					{
+						// Create the factory and logger
+						factory = new LoggerFactory();
+						factory.AddProvider(new FileLoggerProvider(logFile, new FileLoggerOptions()
+						{
+							FileSizeLimitBytes = 1024 * 8,
+							MaxRollingFiles = 5
+						}));
+						logger = factory.CreateLogger("TEST");
+
+
+						// Write many logs 
+						for (int i = 0; i < 1000; i++)
+						{
+							logger.LogInformation("TEST 0123456789");
+						}
+						System.Threading.Thread.Sleep(100); // give some time for log writer to handle the queue
+
+						// check how many files are created
+						// Note the first two files were created before the logger was created
+						// so still must be counted but should be empty
+						Assert.Equal(5, Directory.GetFiles(tmpFileDir, "test*.log").Length);
+
+						Assert.Equal(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test.log")).Length);// locked
+						Assert.Equal(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test1.log")).Length);// locked
+						Assert.NotEqual(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test2.log")).Length);
+						Assert.NotEqual(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test3.log")).Length);
+						Assert.NotEqual(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test4.log")).Length);
+					}
+				}
+
+
+				// Now the files are unlocked, continue logging and check the previously locked files are written to
+				for (int i = 0; i < 400; i++)
+				{
+					logger.LogInformation("TEST 0123456789");
+				}
+
+				factory.Dispose();
+
+				Assert.NotEqual(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test.log")).Length);
+				Assert.NotEqual(0, new System.IO.FileInfo(Path.Combine(tmpFileDir, "test1.log")).Length);
+			}
+			finally {
+				Directory.Delete(tmpFileDir, true);
+			}
+		}
+
 		[Fact]
 		public void WriteConcurrent() {
 			var tmpFile = Path.GetTempFileName();

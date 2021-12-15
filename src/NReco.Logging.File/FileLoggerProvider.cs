@@ -44,6 +44,7 @@ namespace NReco.Logging.File {
 		private readonly bool Append = true;
 		private readonly long FileSizeLimitBytes = 0;
 		private readonly int MaxRollingFiles = 0;
+		private readonly bool SkipErroneousLogFiles = true;
 
 		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
 
@@ -71,6 +72,7 @@ namespace NReco.Logging.File {
 			FormatLogEntry = options.FormatLogEntry;
 			FormatLogFileName = options.FormatLogFileName;
 			MinLevel = options.MinLevel;
+			SkipErroneousLogFiles = options.SkipErroneousLogFiles;
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(
@@ -134,12 +136,14 @@ namespace NReco.Logging.File {
 			Stream LogFileStream;
 			TextWriter LogFileWriter;
 
-			internal FileWriter(FileLoggerProvider fileLogPrv) {
+			internal FileWriter(FileLoggerProvider fileLogPrv)
+			{
 				FileLogPrv = fileLogPrv;
 
 				DetermineLastFileLogName();
-				OpenFile(FileLogPrv.Append);
+				OpenNextAvailableFile(FileLogPrv.Append, true);
 			}
+			
 
 			string GetBaseLogFileName() {
 				var fName = FileLogPrv.LogFileName;
@@ -173,7 +177,80 @@ namespace NReco.Logging.File {
 				}
 			}
 
+			/// <summary>
+			/// Opens the next file. If SkipErroneousLogFiles is on, it will open the next file which an IO exception does not occur.
+			/// </summary>
+			/// <param name="append"></param>
+			void OpenNextAvailableFile(bool append, bool tryExistingFilenameFirst)
+			{
+				// Flush and close what we have open
+				// This is necessary as GetNextFileLogName reads the file size
+				// as written to disk
+				Close();
+
+				HashSet<string> attempted = new HashSet<string>();
+				List<IOException> exceptions = null;
+
+				bool rotateFilename = !tryExistingFilenameFirst;
+				while (true)
+				{
+					if (rotateFilename)
+					{
+						LogFileName = GetNextFileLogName();
+					}
+
+					if (!attempted.Add(LogFileName))
+					{
+						// We have tried this name before
+						// We have now tried all possible file names
+						throw new AggregateException("All log files returned IO exceptions", exceptions);
+					}
+
+					if (TryOpenFile(append, out IOException e))
+					{
+						return;
+					}
+
+					// Failed to open the file.
+					// Move onto the next file, if possible.
+					(exceptions ?? (exceptions = new List<IOException>())).Add(e);
+
+
+					rotateFilename = true;
+				}
+			}
+
+			/// <summary>
+			/// Tries to open a file. Catches IOExceptions if SkipErroneousLogFiles is enabled
+			/// </summary>
+			/// <param name="append"></param>
+			/// <param name="exception"></param>
+			/// <returns></returns>
+			bool TryOpenFile(bool append, out IOException exception)
+            {
+				try
+				{
+					OpenFile(append);
+					exception = null;
+					return true;
+				}
+				catch (IOException e) when (FileLogPrv.SkipErroneousLogFiles)
+				{
+					// It's possible that the file is in use by another process,
+					// temporary IO problems or or permissions issues have arisen
+					exception = e;
+					return false;
+				}
+			}
+
+			/// <summary>
+			/// Closes any open file and opens the file at LogFileName
+			/// </summary>
+			/// <param name="append"></param>
 			void OpenFile(bool append) {
+				// Close anything already open
+				Close();
+				
 				var fileInfo = new FileInfo(LogFileName);
 				
 				// Directory.Create will check if the directory already exists,
@@ -191,12 +268,7 @@ namespace NReco.Logging.File {
 
 			string GetNextFileLogName() {
 				var baseLogFileName = GetBaseLogFileName();
-				// if file does not exist or file size limit is not reached - do not add rolling file index
-				if (!System.IO.File.Exists(baseLogFileName) || 
-					FileLogPrv.FileSizeLimitBytes <= 0 || 
-					new System.IO.FileInfo(baseLogFileName).Length< FileLogPrv.FileSizeLimitBytes)
-					return baseLogFileName;
-
+				
 				int currentFileIndex = 0;
 				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName);
 				var currentFileNameOnly = Path.GetFileNameWithoutExtension(LogFileName);
@@ -218,14 +290,9 @@ namespace NReco.Logging.File {
 			string __LastBaseLogFileName = null;
 
 			void CheckForNewLogFile() {
-				bool openNewFile = false;
-				if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged())
-					openNewFile = true;
-
-				if (openNewFile) {
-					Close();
-					LogFileName = GetNextFileLogName();
-					OpenFile(false);
+				if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged()) {
+					// We need to use a new log file
+					OpenNextAvailableFile(false, false);
 				}
 
 				bool isMaxFileSizeThresholdReached() {
@@ -234,11 +301,10 @@ namespace NReco.Logging.File {
 				bool isBaseFileNameChanged() {
 					if (FileLogPrv.FormatLogFileName!=null) {
 						var baseLogFileName = GetBaseLogFileName();
-						if (baseLogFileName!=__LastBaseLogFileName) {
+						if (baseLogFileName != __LastBaseLogFileName) {
 							__LastBaseLogFileName = baseLogFileName;
 							return true;
 						}
-						return false;
 					}
 					return false;
 				}
