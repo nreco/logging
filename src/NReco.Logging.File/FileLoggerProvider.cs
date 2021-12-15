@@ -83,14 +83,24 @@ namespace NReco.Logging.File {
 			return loggers.GetOrAdd(categoryName, CreateLoggerImplementation);
 		}
 
+		/// <summary>
+		/// Disposes this instance
+		/// </summary>
 		public void Dispose() {
-			entryQueue.CompleteAdding();
 			try {
-				processQueueTask.Wait(1500);  // the same as in ConsoleLogger
-			} catch (TaskCanceledException) { } catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
+				entryQueue.CompleteAdding();
+				try {
+					processQueueTask.Wait(1500);  // the same as in ConsoleLogger
+				}
+				catch (TaskCanceledException) { }
+				catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
 
-			loggers.Clear();
-			fWriter.Close();
+				loggers.Clear();
+			}
+			finally {
+				// Finally block to ensure the file is released in case of an exception
+				fWriter.Dispose();
+			}
 		}
 
 		private FileLogger CreateLoggerImplementation(string name) {
@@ -117,7 +127,7 @@ namespace NReco.Logging.File {
 			fileLogger.ProcessQueue();
 		}
 
-		internal class FileWriter {
+		internal class FileWriter : IDisposable {
 
 			readonly FileLoggerProvider FileLogPrv;
 			string LogFileName;
@@ -243,17 +253,23 @@ namespace NReco.Logging.File {
 				}
 			}
 
-			internal void Close() {
-				if (LogFileWriter!=null) {
-					var logWriter = LogFileWriter;
+			/// <summary>
+			/// Closes and disposes of all internal streams
+			/// </summary>
+			void Close()
+			{
+				try	{
+					LogFileWriter?.Dispose();
 					LogFileWriter = null;
-
-					logWriter.Dispose();
-					LogFileStream.Dispose();
+				}
+				finally	{
+					// use finally block to ensure release of resources in case of exception
+					LogFileStream?.Dispose();
 					LogFileStream = null;
 				}
-
 			}
+
+			public void Dispose() => Close();
 		}
 
 	}
