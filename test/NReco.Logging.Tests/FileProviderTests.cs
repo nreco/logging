@@ -198,6 +198,67 @@ namespace NReco.Logging.Tests
 			}
 		}
 
+		/// <summary>
+		/// Checks an error is thrown if the file to write to is busy and skipping is disables
+		/// </summary>
+		[Fact]
+		public void ThrowIfFilesInUse() {
+			var tmpFileDir = Path.GetTempFileName();  // for test debug: "./"
+			System.IO.File.Delete(tmpFileDir);
+
+			Directory.CreateDirectory(tmpFileDir);
+			LoggerFactory factory = null;
+			var logFile = Path.Combine(tmpFileDir, "test.log");
+			try {
+				// We lock files test.log and test1.log so they can't be touched by the logger
+				using (FileStream fs_lockingFile0 = new FileStream(logFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+				{
+					using (FileStream fs_lockingFile1 = new FileStream(Path.Combine(tmpFileDir, "test1.log"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+					{
+						// Create the factory and logger
+						using (factory = new LoggerFactory())
+						{
+							// Skip turned off and none available
+							// The raw IOException should be thrown
+							Assert.ThrowsAny<IOException>(() =>
+								factory.AddProvider(new FileLoggerProvider(logFile, new FileLoggerOptions()
+								{
+									FileSizeLimitBytes = 1024 * 8,
+									MaxRollingFiles = 1,
+									SkipErroneousLogFiles = false
+								}))
+							);
+
+							// Can skip but none available
+							// An aggregate exception of all IOExceptions should be thrown
+							Assert.ThrowsAny<AggregateException>(() =>
+								factory.AddProvider(new FileLoggerProvider(logFile, new FileLoggerOptions()
+								{
+									FileSizeLimitBytes = 1024 * 8,
+									MaxRollingFiles = 1,
+									SkipErroneousLogFiles = true
+								}))
+								);
+
+							// Skip turned off and many available
+							// The raw IOException should be thrown
+							Assert.ThrowsAny<IOException>(() =>
+							factory.AddProvider(new FileLoggerProvider(logFile, new FileLoggerOptions()
+							{
+								FileSizeLimitBytes = 1024 * 8,
+								MaxRollingFiles = 10,
+								SkipErroneousLogFiles = false
+							}))
+							);
+						}
+					}
+				}
+			}
+			finally {
+				Directory.Delete(tmpFileDir, true);
+			}
+		}
+
 		[Fact]
 		public void WriteConcurrent() {
 			var tmpFile = Path.GetTempFileName();
