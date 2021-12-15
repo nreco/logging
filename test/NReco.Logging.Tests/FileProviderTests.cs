@@ -225,7 +225,7 @@ namespace NReco.Logging.Tests
 								{
 									FileSizeLimitBytes = 1024 * 8,
 									MaxRollingFiles = 1,
-									SkipErroneousLogFiles = false
+									SkipUnopenableLogFiles = false
 								}))
 							);
 
@@ -236,7 +236,7 @@ namespace NReco.Logging.Tests
 								{
 									FileSizeLimitBytes = 1024 * 8,
 									MaxRollingFiles = 1,
-									SkipErroneousLogFiles = true
+									SkipUnopenableLogFiles = true
 								}))
 								);
 
@@ -247,7 +247,7 @@ namespace NReco.Logging.Tests
 							{
 								FileSizeLimitBytes = 1024 * 8,
 								MaxRollingFiles = 10,
-								SkipErroneousLogFiles = false
+								SkipUnopenableLogFiles = false
 							}))
 							);
 						}

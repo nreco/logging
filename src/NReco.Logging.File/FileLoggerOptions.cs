@@ -52,7 +52,7 @@ namespace NReco.Logging.File {
 		/// If true and a log file fails to open for writing, this will silently skip to the next possible file.
 		/// </summary>
 		/// <remarks>Only applicable when <see cref="MaxRollingFiles"/> is greater than 1. Provides limited recovery from temporary IO issues affecting individual files.</remarks>
-		public bool SkipErroneousLogFiles { get; set; } = true;
+		public bool SkipUnopenableLogFiles { get; set; } = true;
 
 		/// <summary>
 		/// Custom formatter for the log entry line. 

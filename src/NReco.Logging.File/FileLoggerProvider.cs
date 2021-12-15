@@ -44,7 +44,7 @@ namespace NReco.Logging.File {
 		private readonly bool Append = true;
 		private readonly long FileSizeLimitBytes = 0;
 		private readonly int MaxRollingFiles = 0;
-		private readonly bool SkipErroneousLogFiles = true;
+		private readonly bool SkipUnopenableLogFiles = true;
 
 		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
 
@@ -72,7 +72,7 @@ namespace NReco.Logging.File {
 			FormatLogEntry = options.FormatLogEntry;
 			FormatLogFileName = options.FormatLogFileName;
 			MinLevel = options.MinLevel;
-			SkipErroneousLogFiles = options.SkipErroneousLogFiles;
+			SkipUnopenableLogFiles = options.SkipUnopenableLogFiles;
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(
@@ -234,7 +234,7 @@ namespace NReco.Logging.File {
 					exception = null;
 					return true;
 				}
-				catch (IOException e) when (FileLogPrv.SkipErroneousLogFiles)
+				catch (IOException e) when (FileLogPrv.SkipUnopenableLogFiles)
 				{
 					// It's possible that the file is in use by another process,
 					// temporary IO problems or or permissions issues have arisen
