@@ -199,7 +199,7 @@ namespace NReco.Logging.Tests
 		}
 
 		/// <summary>
-		/// Checks an error is thrown if the file to write to is busy and skipping is disables
+		/// Checks an error is thrown if the file to write to is busy and skipping is disabled
 		/// </summary>
 		[Fact]
 		public void ThrowIfFilesInUse() {
