@@ -385,6 +385,101 @@ namespace NReco.Logging.Tests
 
 		}
 
+		[Fact]
+		public void LogIsReadableDuringWrite()
+		{
+			var tmpFile = Path.GetTempFileName();
+			try
+			{
+				var factory = new LoggerFactory();
+				factory.AddProvider(new FileLoggerProvider(tmpFile, false));
+				var logger = factory.CreateLogger("TEST");
+
+				for (int i = 0; i < 400; i++)
+				{
+					logger.LogInformation("Line1");
+				}
+
+				Thread.Sleep(100);// allow time to flush
+				Assert.True(new FileInfo(tmpFile).Length > 0, "expected to have been flushed to");
+
+				// Read from the file, which should be open in logger
+				using (System.IO.FileStream fs = new System.IO.FileStream(tmpFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+				{
+					Assert.True(fs.CanRead);
+					Assert.True(fs.Length > 0);
+				}
+
+				// Try to write simultaneously
+				Assert.Throws<IOException>(() => System.IO.File.AppendAllText(tmpFile, "this should crash"));
+
+				factory.Dispose();
+
+				// Check it has been released
+				System.IO.File.AppendAllText(tmpFile, "something to append");
+
+			}
+			finally
+			{
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+
+		/// <summary>
+		/// As WriteRollingFile but checks for stability if some files are in use
+		/// </summary>
+		[Fact]
+		public void FilesAreReleased()
+		{
+			var tmpFileDir = Path.GetTempFileName();  // for test debug: "./"
+			System.IO.File.Delete(tmpFileDir);
+
+			Directory.CreateDirectory(tmpFileDir);
+			LoggerFactory factory = null;
+			ILogger logger = null;
+			var logFile0 = Path.Combine(tmpFileDir, "test.log");
+			var logFile1 = Path.Combine(tmpFileDir, "test1.log");
+			try
+			{
+
+				// Create the factory and logger
+				using (factory = new LoggerFactory())
+				{
+					factory.AddProvider(new FileLoggerProvider(logFile0, new FileLoggerOptions()
+					{
+						FileSizeLimitBytes = 1024 * 8,
+						MaxRollingFiles = 2
+					}));
+					logger = factory.CreateLogger("TEST");
+
+
+					// Try to write simultaneously
+					Assert.Throws<IOException>(() => System.IO.File.AppendAllText(logFile0, "this should crash"));
+					System.IO.File.AppendAllText(logFile1, "this should not crash");
+
+					// Write enough logs to move to the next file
+					for (int i = 0; i < 150; i++)
+					{
+						logger.LogInformation("TEST 0123456789");
+					}
+					System.Threading.Thread.Sleep(100); // give some time for log writer to handle the queue
+
+
+					// The first file should be released
+					System.IO.File.AppendAllText(logFile0, "this should not crash");
+					Assert.Throws<IOException>(() => System.IO.File.AppendAllText(logFile1, "this should crash"));
+
+				}
+
+				System.IO.File.AppendAllText(logFile0, "this should not crash");
+				System.IO.File.AppendAllText(logFile1, "this should not crash");
+			}
+			finally
+			{
+				Directory.Delete(tmpFileDir, true);
+			}
+		}
 
 	}
 }
