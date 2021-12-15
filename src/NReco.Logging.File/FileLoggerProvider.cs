@@ -183,11 +183,6 @@ namespace NReco.Logging.File {
 			/// <param name="append"></param>
 			void OpenNextAvailableFile(bool append, bool tryExistingFilenameFirst)
 			{
-				// Flush and close what we have open
-				// This is necessary as GetNextFileLogName reads the file size
-				// as written to disk
-				Close();
-
 				HashSet<string> attempted = new HashSet<string>();
 				List<IOException> exceptions = null;
 
