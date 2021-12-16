@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
+using System.Text;
 
 namespace NReco.Logging.Tests
 {
@@ -480,6 +481,109 @@ namespace NReco.Logging.Tests
 				Directory.Delete(tmpFileDir, true);
 			}
 		}
+
+
+		/// <summary>
+		/// As WriteRollingFile but checks for stability if some files are in use
+		/// </summary>
+		[Theory]
+		[Xunit.InlineData(0, true)]
+		[Xunit.InlineData(1, true)]
+		[Xunit.InlineData(2, true)]
+		[Xunit.InlineData(0, false)]
+		[Xunit.InlineData(1, false)]
+		[Xunit.InlineData(2, false)]
+		public void ResumesToCorrectFile(int maxRollingFiles, bool limitFileSize)
+		{
+			var tmpFileDir = Path.GetTempFileName();  // for test debug: "./"
+			System.IO.File.Delete(tmpFileDir);
+
+			Directory.CreateDirectory(tmpFileDir);
+			LoggerFactory factory = null;
+			ILogger logger = null;
+			var logFile0 = Path.Combine(tmpFileDir, "test.log");
+			var logFile1 = Path.Combine(tmpFileDir, "test1.log");
+			try
+            {
+                // Create the factory and logger
+                CreateFactory();
+
+                // Write a few logs but not enough to move to the next file
+                logger.LogInformation("TEST 0123456789");
+                logger.LogInformation("TEST 0123456789");
+                System.Threading.Thread.Sleep(100); // give some time for log writer to handle the queue
+                factory.Dispose();
+
+				// Check things have been written to the expected log file (only)
+				Assert.True(System.IO.File.Exists(logFile0));
+				Assert.False(System.IO.File.Exists(logFile1));
+
+				// Check that a new object will continue to write to the correct log file
+				long origFileSize = new FileInfo(logFile0).Length;
+				CreateFactory();
+				// Write a few logs but not enough to move to the next file
+				logger.LogInformation("TEST 0123456789");
+				logger.LogInformation("TEST 0123456789");
+				System.Threading.Thread.Sleep(100); // give some time for log writer to handle the queue
+				Assert.True(new FileInfo(logFile0).Length > origFileSize, "Has not written to correct file or overwritten rather than appended");
+				Assert.False(System.IO.File.Exists(logFile1));
+				factory.Dispose();
+
+				// Fill the log file completely
+				StringBuilder sb = new StringBuilder(1024);
+                for (int i = 0; i < 1024 * 8 + 1; i++)
+                {
+					sb.Append('a');
+                }
+				System.IO.File.WriteAllText(logFile0, sb.ToString());
+				Assert.True(new FileInfo(logFile0).Length > 1024 * 8);// sanity check
+				CreateFactory();
+
+				origFileSize = new FileInfo(logFile0).Length;
+				logger.LogInformation("TEST 0123456789");
+				System.Threading.Thread.Sleep(100); // give some time for log writer to handle the queue
+				factory.Dispose();
+
+				if (limitFileSize)
+				{
+					if (maxRollingFiles == 1)
+					{
+						// No rolling files allowed. Should have overwritten the original
+						Assert.False(System.IO.File.Exists(logFile1), "file should never be created");
+						Assert.True(new FileInfo(logFile0).Length < origFileSize, "Has not cleared the log file");
+					}
+					else
+					{
+						// Should have written to a new file
+						Assert.True(new FileInfo(logFile0).Length == origFileSize, "Has written to incorrect file");
+						Assert.True(System.IO.File.Exists(logFile1), "Has failed to create new file when needed");
+					}
+				}
+				else
+                {
+					// No rolling files required. Should have overwritten the original
+					Assert.False(System.IO.File.Exists(logFile1), "file should never be created");
+					Assert.True(new FileInfo(logFile0).Length > origFileSize, "Has not appended to the log file");
+				}
+			}
+            finally
+			{
+				factory?.Dispose();
+				Directory.Delete(tmpFileDir, true);
+			}
+
+            void CreateFactory()
+            {
+                factory = new LoggerFactory();
+
+                factory.AddProvider(new FileLoggerProvider(logFile0, new FileLoggerOptions()
+                {
+                    FileSizeLimitBytes = limitFileSize ? 1024 * 8 : -1,
+                    MaxRollingFiles = maxRollingFiles
+				}));
+                logger = factory.CreateLogger("TEST");
+            }
+        }
 
 	}
 }

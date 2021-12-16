@@ -263,6 +263,12 @@ namespace NReco.Logging.File {
 
 			string GetNextFileLogName() {
 				var baseLogFileName = GetBaseLogFileName();
+
+				if (FileLogPrv.FileSizeLimitBytes <= 0) {
+					// Rolling files is disabled
+					// Always use the same file
+					return baseLogFileName;
+				}
 				
 				int currentFileIndex = 0;
 				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName);
