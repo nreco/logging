@@ -1,5 +1,5 @@
 # NReco.Logging.File
-Simple and efficient file logger provider for .NET Core (any version) without additional dependencies.
+Simple and efficient file logger provider for .NET Core (any version) / NET5 / NET6 without additional dependencies.
 
 [![NuGet Release](https://img.shields.io/nuget/v/NReco.Logging.File.svg)](https://www.nuget.org/packages/NReco.Logging.File/)
 
@@ -84,6 +84,6 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js
 (in case of .NET Core 2 use `loggingBuilder.AddProvider` instead of `loggerFactory.AddProvider`).
 
 ## License
-Copyright 2017-2020 Vitaliy Fedorchenko and contributors
+Copyright 2017-2021 Vitaliy Fedorchenko and contributors
 
 Distributed under the MIT license

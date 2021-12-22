@@ -75,6 +75,20 @@ namespace NReco.Logging.File
         /// };
         /// </example>
         public Func<string, string> FormatLogFileName { get; set; }
+
+        /// <summary>
+        /// Custom handler for log file errors.
+        /// </summary>
+        /// <remarks>If this handler is provided file open exception (on <code>FileLoggerProvider</code> creation) will be suppressed.
+        /// You can handle file error exception according to your app's logic, and propose an alternative log file name (if you want to keep file logger working).
+        /// </remarks>
+        /// <example>
+        /// fileLoggerOpts.HandleFileError = (err) => {
+        ///   err.UseNewLogFileName( Path.GetFileNameWithoutExtension(err.LogFileName)+ "_alt" + Path.GetExtension(err.LogFileName) );
+        /// };
+        /// </example>
+        public Action<FileLoggerProvider.FileError> HandleFileError { get; set; }
+
     }
 
 

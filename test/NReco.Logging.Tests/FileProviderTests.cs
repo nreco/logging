@@ -257,5 +257,50 @@ namespace NReco.Logging.Tests
 		}
 
 
+		[Fact]
+		public void FileOpenErrorHandling() {
+
+			var tmpDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+			var logFileName = Path.Combine(tmpDir, "testfile.log");
+
+			var factory = new LoggerFactory();
+			factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {} ));
+			var logger = factory.CreateLogger("TEST");
+			writeSomethingToLogger(logger);
+
+			Assert.Throws<IOException>(() => {
+				// now try to use currently used file in another logger
+				var factory2 = new LoggerFactory();
+				factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { }));
+				var logger2 = factory2.CreateLogger("TEST");
+				writeSomethingToLogger(logger2);
+			});
+
+			var errorHandled = false;
+			var factory2 = new LoggerFactory();
+			var altLogFileName = Path.Combine(tmpDir, "testfile_after_err.log");
+			factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {
+				HandleFileError = (err) => {
+					errorHandled = true;
+					err.UseNewLogFileName(altLogFileName);
+				}
+			}));
+			var logger2 = factory2.CreateLogger("TEST");
+			writeSomethingToLogger(logger2);
+			Assert.True(errorHandled);
+			factory2.Dispose();
+			// ensure that alt file name was used
+			var altLogFileInfo = new FileInfo(altLogFileName);
+			Assert.True(altLogFileInfo.Exists);
+			Assert.True(altLogFileInfo.Length > 0);
+
+			void writeSomethingToLogger(ILogger log) {
+				for (int i = 0; i < 15; i++) {
+					log.LogInformation("Line" + (i + 1).ToString());
+				}
+			}
+		}
+
+
 	}
 }

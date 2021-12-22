@@ -33,7 +33,7 @@ namespace NReco.Logging.File {
 #endif
 	public class FileLoggerProvider : ILoggerProvider {
 
-		private readonly string LogFileName;
+		private string LogFileName;
 
 		private readonly ConcurrentDictionary<string, FileLogger> loggers =
 			new ConcurrentDictionary<string, FileLogger>();
@@ -57,6 +57,11 @@ namespace NReco.Logging.File {
 		/// </summary>
 		public Func<string, string> FormatLogFileName { get; set; }
 
+		/// <summary>
+		/// Custom handler for file errors.
+		/// </summary>
+		public Action<FileError> HandleFileError { get; set; }
+
 		public FileLoggerProvider(string fileName) : this(fileName, true) {
 		}
 
@@ -70,6 +75,7 @@ namespace NReco.Logging.File {
 			MaxRollingFiles = options.MaxRollingFiles;
 			FormatLogEntry = options.FormatLogEntry;
 			FormatLogFileName = options.FormatLogFileName;
+			HandleFileError = options.HandleFileError;
 			MinLevel = options.MinLevel;
 
 			fWriter = new FileWriter(this);
@@ -164,20 +170,40 @@ namespace NReco.Logging.File {
 			}
 
 			void OpenFile(bool append) {
-				var fileInfo = new FileInfo(LogFileName);
-				
-				// Directory.Create will check if the directory already exists,
-				// so there is no need for a "manual" check first.
-				fileInfo.Directory.Create();
 
-				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
-				if (append) {
-					LogFileStream.Seek(0, SeekOrigin.End);
-				} else {
-					LogFileStream.SetLength(0); // clear the file
+				try {
+					createLogFileStream();
+				} catch (Exception ex) {
+					if (FileLogPrv.HandleFileError!=null) {
+						var fileErr = new FileError(LogFileName, ex);
+						FileLogPrv.HandleFileError(fileErr);
+						if (fileErr.NewLogFileName!=null) {
+							FileLogPrv.LogFileName = fileErr.NewLogFileName;
+							DetermineLastFileLogName(); // preserve all existing logic related to 'FormatLogFileName' and rolling files
+							createLogFileStream();  // if error occurs it is not handled recursively
+						}
+					} else {
+						throw; // do not handle by default to preserve backward compatibility
+					}
 				}
+
 				LogFileWriter = new StreamWriter(LogFileStream);
+
+				void createLogFileStream() {
+					var fileInfo = new FileInfo(LogFileName);
+					// Directory.Create will check if the directory already exists,
+					// so there is no need for a "manual" check first.
+					fileInfo.Directory.Create();
+
+					LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
+					if (append) {
+						LogFileStream.Seek(0, SeekOrigin.End);
+					} else {
+						LogFileStream.SetLength(0); // clear the file
+					}
+				}
 			}
+
 
 			string GetNextFileLogName() {
 				var baseLogFileName = GetBaseLogFileName();
@@ -253,6 +279,40 @@ namespace NReco.Logging.File {
 					LogFileStream = null;
 				}
 
+			}
+		}
+
+		/// <summary>
+		/// Represents a file error context.
+		/// </summary>
+		public class FileError {
+
+			/// <summary>
+			/// Exception that occurs on the file operation.
+			/// </summary>
+			public Exception ErrorException { get; private set; }
+
+			/// <summary>
+			/// Current log file name.
+			/// </summary>
+			public string LogFileName { get; private set; }
+
+			internal FileError(string logFileName, Exception ex) {
+				LogFileName = logFileName;
+				ErrorException = ex;
+			}
+
+			internal string NewLogFileName { get; private set; }
+
+			/// <summary>
+			/// Suggests a new log file name to use instead of the current one. 
+			/// </summary>
+			/// <remarks>
+			/// If proposed file name also leads to a file error this will break a file logger: errors are not handled recursively.
+			/// </remarks>
+			/// <param name="newLogFileName">a new log file name</param>
+			public void UseNewLogFileName(string newLogFileName) {
+				NewLogFileName = newLogFileName;
 			}
 		}
 
