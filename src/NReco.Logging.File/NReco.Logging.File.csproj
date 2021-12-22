@@ -5,7 +5,7 @@
     <Title>.NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2021 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.1.2</VersionPrefix>
+    <VersionPrefix>1.1.3</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -16,6 +16,9 @@
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+
+Version 1.1.3 changes:
+ - added FileLoggerOptions.HandleFileError for app-specific handling of File.Open exceptions (file is used by another process etc)
 
 Version 1.1.2 changes:
  - changed default FileLoggingProvider.MinLevel from Debug to Trace #26

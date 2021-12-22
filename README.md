@@ -83,6 +83,21 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js
 ```
 (in case of .NET Core 2 use `loggingBuilder.AddProvider` instead of `loggerFactory.AddProvider`).
 
+## File errors handling
+Log file is opened immediately when `FileLoggerProvider` is created (= on `AddFile` call) and you may handle initial file opening errors simply by wrapping `AddFile` with a `try .. catch`. 
+However you might want to propose a new log file name to guartee that file logging works even if an original log file is not accessible. To provide your own handling of file errors you may specify `HandleFileError` delegate:
+```
+loggingBuilder.AddFile(loggingSection, fileLoggerOpts => {
+	fileLoggerOpts.HandleFileError = (err) => {
+		err.UseNewLogFileName( Path.GetFileNameWithoutExtension(err.LogFileName)+ "_alt" + Path.GetExtension(err.LogFileName) );
+	};
+});
+```
+Real-life implementation may be more complicated to guarantee that a new file name can be used without errors; note that `HandleFileError` is not recursive and it will not be called if proposed file name cannot be opened too. 
+
+A new file name is applied in the same way as when it comes from the initial `FileLoggerProvider` options (if `FormatLogFileName` is specified it is called to resolve a final log file name).
+
+
 ## License
 Copyright 2017-2021 Vitaliy Fedorchenko and contributors
 
