@@ -33,7 +33,7 @@ Example of the configuration section in appsettings.json:
 	},
 	"File": {
 		"Path": "app.log",
-		"Append": "True",
+		"Append": true,
 		"MinLevel": "Warning",  // min level for the file logger
 		"FileSizeLimitBytes": 0,  // use to activate rolling file behaviour
 		"MaxRollingFiles": 0  // use to specify max number of log files
