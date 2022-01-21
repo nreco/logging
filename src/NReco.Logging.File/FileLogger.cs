@@ -84,7 +84,8 @@ namespace NReco.Logging.File {
 				// default formatting logic
 				var logBuilder = new StringBuilder();
 				if (!string.IsNullOrEmpty(message)) {
-					logBuilder.Append(DateTime.Now.ToString("o"));
+					DateTime timeStamp = LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now;
+					logBuilder.Append(timeStamp.ToString("o"));
 					logBuilder.Append('\t');
 					logBuilder.Append(GetShortLogLevel(logLevel));
 					logBuilder.Append("\t[");

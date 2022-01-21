@@ -53,6 +53,11 @@ namespace NReco.Logging.File
         public int MaxRollingFiles { get; set; } = 0;
 
         /// <summary>
+		///  Gets or sets indication whether or not UTC timezone should be used to for timestamps in logging messages. Defaults to false.
+		/// </summary>
+		public bool UseUtcTimestamp { get; set; }
+
+        /// <summary>
         /// Custom formatter for the log entry line. 
         /// </summary>
         public Func<LogMessage, string> FormatLogEntry { get; set; }
