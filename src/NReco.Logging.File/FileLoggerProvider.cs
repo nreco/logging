@@ -48,6 +48,11 @@ namespace NReco.Logging.File {
 		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
 
 		/// <summary>
+		///  Gets or sets indication whether or not UTC timezone should be used to for timestamps in logging messages. Defaults to false.
+		/// </summary>
+		public bool UseUtcTimestamp { get; set; }
+
+		/// <summary>
 		/// Custom formatter for log entry. 
 		/// </summary>
 		public Func<LogMessage,string> FormatLogEntry { get; set; }
@@ -73,6 +78,7 @@ namespace NReco.Logging.File {
 			Append = options.Append;
 			FileSizeLimitBytes = options.FileSizeLimitBytes;
 			MaxRollingFiles = options.MaxRollingFiles;
+			UseUtcTimestamp = options.UseUtcTimestamp;
 			FormatLogEntry = options.FormatLogEntry;
 			FormatLogFileName = options.FormatLogFileName;
 			HandleFileError = options.HandleFileError;
