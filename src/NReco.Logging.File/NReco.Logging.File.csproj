@@ -3,9 +3,9 @@
   <PropertyGroup>
     <Description>Standalone file logging provider for .NET Core without dependencies on the logging frameworks.</Description>
     <Title>.NET Core file logger provider.</Title>
-	<Copyright>Copyright (c) 2017-2021 Vitalii Fedorchenko and contributors</Copyright>
+	<Copyright>Copyright (c) 2017-2022 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.1.3</VersionPrefix>
+    <VersionPrefix>1.1.4</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -16,6 +16,9 @@
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+
+Version 1.1.4 changes:
+ - added FileLoggerOptions.UseUtcTimestamp to use UTC timestamp in the default log entry formatter #36
 
 Version 1.1.3 changes:
  - added FileLoggerOptions.HandleFileError for app-specific handling of File.Open exceptions (file is used by another process etc)
