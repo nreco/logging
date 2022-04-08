@@ -58,6 +58,11 @@ namespace NReco.Logging.File
 		public bool UseUtcTimestamp { get; set; }
 
         /// <summary>
+        ///  Gets or sets indication whether or not log file should be created with first message being written. Defaults to false.
+        /// </summary>
+        public bool LazyFileOpen { get; set; }
+
+        /// <summary>
         /// Custom formatter for the log entry line. 
         /// </summary>
         public Func<LogMessage, string> FormatLogEntry { get; set; }

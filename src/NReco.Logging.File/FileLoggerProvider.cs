@@ -84,7 +84,7 @@ namespace NReco.Logging.File {
 			HandleFileError = options.HandleFileError;
 			MinLevel = options.MinLevel;
 
-			fWriter = new FileWriter(this);
+			fWriter = new FileWriter(this, options.LazyFileOpen);
 			processQueueTask = Task.Factory.StartNew(
 				ProcessQueue,
 				this,
@@ -102,7 +102,7 @@ namespace NReco.Logging.File {
 			} catch (TaskCanceledException) { } catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
 
 			loggers.Clear();
-			fWriter.Close();
+			fWriter?.Close();
 		}
 
 		private FileLogger CreateLoggerImplementation(string name) {
@@ -136,11 +136,12 @@ namespace NReco.Logging.File {
 			Stream LogFileStream;
 			TextWriter LogFileWriter;
 
-			internal FileWriter(FileLoggerProvider fileLogPrv) {
+			internal FileWriter(FileLoggerProvider fileLogPrv, bool lazyMode) {
 				FileLogPrv = fileLogPrv;
 
 				DetermineLastFileLogName();
-				OpenFile(FileLogPrv.Append);
+				if (!lazyMode)
+					OpenFile(FileLogPrv.Append);
 			}
 
 			string GetBaseLogFileName() {
@@ -241,7 +242,11 @@ namespace NReco.Logging.File {
 
 			void CheckForNewLogFile() {
 				bool openNewFile = false;
-				if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged())
+
+				if (LogFileWriter == null)
+					openNewFile = true;
+
+				if (!openNewFile && (isMaxFileSizeThresholdReached() || isBaseFileNameChanged()))
 					openNewFile = true;
 
 				if (openNewFile) {
@@ -267,12 +272,10 @@ namespace NReco.Logging.File {
 			}
 
 			internal void WriteMessage(string message, bool flush) {
-				if (LogFileWriter != null) {
-					CheckForNewLogFile();
-					LogFileWriter.WriteLine(message);
-					if (flush)
-						LogFileWriter.Flush();
-				}
+				CheckForNewLogFile();
+				LogFileWriter.WriteLine(message);
+				if (flush)
+					LogFileWriter.Flush();
 			}
 
 			internal void Close() {
