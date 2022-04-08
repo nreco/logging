@@ -131,6 +131,27 @@ namespace NReco.Logging.Tests
 		}
 
 		[Fact]
+		public void LazyFileOpenMode()
+		{
+			var tmpFile = Path.Join(Path.GetTempPath(), $"{Guid.NewGuid()}.tmp");
+			try {
+				var factory = new LoggerFactory();
+				var options = new FileLoggerOptions() { LazyFileOpen = true };
+				factory.AddProvider(new FileLoggerProvider(tmpFile, options));
+				var logger = factory.CreateLogger("TEST");
+
+				Assert.False(System.IO.File.Exists(tmpFile));
+				logger.LogInformation("MSG");
+				Thread.Sleep(200); // let process message
+				Assert.True(System.IO.File.Exists(tmpFile));
+
+				factory.Dispose();
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
 		public void WriteConcurrent() {
 			var tmpFile = Path.GetTempFileName();
 			try {
