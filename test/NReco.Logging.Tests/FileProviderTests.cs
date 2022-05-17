@@ -256,43 +256,62 @@ namespace NReco.Logging.Tests
 
 		}
 
+		void CleanupTempDir(string tmpDir, IEnumerable<IDisposable> toDispose) {
+			try {
+				foreach (var o in toDispose)
+					o.Dispose();
+				if (Directory.Exists(tmpDir)) {
+					Directory.Delete(tmpDir, true);
+				}
+			} catch {
+				// ignore cleanup errs
+			}
+		}
 
 		[Fact]
 		public void FileOpenErrorHandling() {
 
 			var tmpDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-			var logFileName = Path.Combine(tmpDir, "testfile.log");
+			var toDispose = new List<IDisposable>();
+			try {
+				var logFileName = Path.Combine(tmpDir, "testfile.log");
 
-			var factory = new LoggerFactory();
-			factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {} ));
-			var logger = factory.CreateLogger("TEST");
-			writeSomethingToLogger(logger);
+				var factory = new LoggerFactory();
+				toDispose.Add(factory);
+				factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { }));
+				var logger = factory.CreateLogger("TEST");
+				writeSomethingToLogger(logger);
 
-			Assert.Throws<IOException>(() => {
-				// now try to use currently used file in another logger
+				Assert.Throws<IOException>(() => {
+					// now try to use currently used file in another logger
+					var factory2 = new LoggerFactory();
+					factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { }));
+					var logger2 = factory2.CreateLogger("TEST");
+					writeSomethingToLogger(logger2);
+				});
+
+				var errorHandled = false;
 				var factory2 = new LoggerFactory();
-				factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { }));
+				toDispose.Add(factory2);
+				var altLogFileName = Path.Combine(tmpDir, "testfile_after_err.log");
+				factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {
+					HandleFileError = (err) => {
+						errorHandled = true;
+						err.UseNewLogFileName(altLogFileName);
+					}
+				}));
 				var logger2 = factory2.CreateLogger("TEST");
 				writeSomethingToLogger(logger2);
-			});
+				Assert.True(errorHandled);
+				factory2.Dispose();
+				// ensure that alt file name was used
+				var altLogFileInfo = new FileInfo(altLogFileName);
+				Assert.True(altLogFileInfo.Exists);
+				Assert.True(altLogFileInfo.Length > 0);
 
-			var errorHandled = false;
-			var factory2 = new LoggerFactory();
-			var altLogFileName = Path.Combine(tmpDir, "testfile_after_err.log");
-			factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {
-				HandleFileError = (err) => {
-					errorHandled = true;
-					err.UseNewLogFileName(altLogFileName);
-				}
-			}));
-			var logger2 = factory2.CreateLogger("TEST");
-			writeSomethingToLogger(logger2);
-			Assert.True(errorHandled);
-			factory2.Dispose();
-			// ensure that alt file name was used
-			var altLogFileInfo = new FileInfo(altLogFileName);
-			Assert.True(altLogFileInfo.Exists);
-			Assert.True(altLogFileInfo.Length > 0);
+			} finally {
+				CleanupTempDir(tmpDir, toDispose);
+			}
 
 			void writeSomethingToLogger(ILogger log) {
 				for (int i = 0; i < 15; i++) {
@@ -301,6 +320,32 @@ namespace NReco.Logging.Tests
 			}
 		}
 
+		[Fact]
+		public void CustomFilterLogEntry() {
+			var tmpDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+			var logFileName = Path.Combine(tmpDir, "testfile.log");
+			var factory = new LoggerFactory();
+			try {
+				factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { 
+					FilterLogEntry = (logEntry) => {
+						return logEntry.LogName == "TEST";
+					}
+				}));
+				var testLogger = factory.CreateLogger("TEST");
+				var test2Logger = factory.CreateLogger("TEST2");
+
+				testLogger.LogInformation("TEST");
+				test2Logger.LogInformation("TEST2");
+
+				factory.Dispose();
+
+				var logLines = System.IO.File.ReadAllLines(logFileName);
+				Assert.Single(logLines);
+				Assert.False(logLines[0].Contains("TEST2"));
+			} finally {
+				CleanupTempDir(tmpDir, new[] { factory });
+			}
+		} 		
 
 	}
 }

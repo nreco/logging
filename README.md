@@ -62,10 +62,10 @@ services.AddLogging(loggingBuilder => {
 Note that this handler is called on _every_ log message 'write'; you may cache the log file name calculation in your handler to avoid any potential overhead in case of high-load logger usage.
 
 ## Custom log entry formatting
-You can specify `FileLoggerProvider.FormatLogEntry` handler to customize log entry content. For example, it is possible to write log entry as JSON array:
+You can specify `FileLoggerOptions.FormatLogEntry` handler to customize log entry content. For example, it is possible to write log entry as JSON array:
 ```
-loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js", true) {
-	FormatLogEntry = (msg) => {
+loggingBuilder.AddFile("logs/app.js", fileLoggerOpts => {
+	fileLoggerOpts.FormatLogEntry = (msg) => {
 		var sb = new System.Text.StringBuilder();
 		StringWriter sw = new StringWriter(sb);
 		var jsonWriter = new Newtonsoft.Json.JsonTextWriter(sw);
@@ -81,7 +81,17 @@ loggerFactory.AddProvider(new NReco.Logging.File.FileLoggerProvider("logs/app.js
 	}
 });
 ```
-(in case of .NET Core 2 use `loggingBuilder.AddProvider` instead of `loggerFactory.AddProvider`).
+
+## Custom log entry filtering
+You may provide a predicate to perform filter log entries filtering on the logging provider level. This may be useful if you want to have 2 (or more)
+file loggers that separate log entries between log files on some criteria:
+```
+loggingBuilder.AddFile("logs/errors_only.log", fileLoggerOpts => {
+	fileLoggerOpts.FilterLogEntry = (msg) => {
+		return msg.LogLevel == LogLevel.Error;
+	}
+});
+```
 
 ## File errors handling
 Log file is opened immediately when `FileLoggerProvider` is created (= on `AddFile` call) and you may handle initial file opening errors simply by wrapping `AddFile` with a `try .. catch`. 

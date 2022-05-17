@@ -63,6 +63,11 @@ namespace NReco.Logging.File
         public Func<LogMessage, string> FormatLogEntry { get; set; }
 
         /// <summary>
+        /// Custom filter for the log entry.
+        /// </summary>
+        public Func<LogMessage, bool> FilterLogEntry { get; set; }
+
+        /// <summary>
         /// Minimal logging level for the file logger.
         /// </summary>
         public LogLevel MinLevel { get; set; } = LogLevel.Trace;

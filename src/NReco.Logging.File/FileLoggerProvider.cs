@@ -41,31 +41,48 @@ namespace NReco.Logging.File {
 		private readonly Task processQueueTask;
 		private readonly FileWriter fWriter;
 
-		private readonly bool Append = true;
-		private readonly long FileSizeLimitBytes = 0;
-		private readonly int MaxRollingFiles = 0;
+		internal FileLoggerOptions Options { get; private set; }
 
-		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
+		private bool Append => Options.Append;
+		private long FileSizeLimitBytes => Options.FileSizeLimitBytes;
+		private int MaxRollingFiles => Options.MaxRollingFiles;
+
+		public LogLevel MinLevel {
+			get => Options.MinLevel; 
+			set { Options.MinLevel = value; }
+		}
 
 		/// <summary>
 		///  Gets or sets indication whether or not UTC timezone should be used to for timestamps in logging messages. Defaults to false.
 		/// </summary>
-		public bool UseUtcTimestamp { get; set; }
+		public bool UseUtcTimestamp { 
+			get => Options.UseUtcTimestamp; 
+			set { Options.UseUtcTimestamp = value; } 
+		}
 
 		/// <summary>
 		/// Custom formatter for log entry. 
 		/// </summary>
-		public Func<LogMessage,string> FormatLogEntry { get; set; }
+		public Func<LogMessage,string> FormatLogEntry {
+			get => Options.FormatLogEntry; 
+			set { Options.FormatLogEntry = value; }
+		}
 
 		/// <summary>
 		/// Custom formatter for the log file name.
 		/// </summary>
-		public Func<string, string> FormatLogFileName { get; set; }
+		public Func<string, string> FormatLogFileName {
+			get => Options.FormatLogFileName; 
+			set { Options.FormatLogFileName = value; }
+		}
 
 		/// <summary>
 		/// Custom handler for file errors.
 		/// </summary>
-		public Action<FileError> HandleFileError { get; set; }
+		public Action<FileError> HandleFileError {
+			get => Options.HandleFileError;
+			set { Options.HandleFileError = value; } 
+		}
 
 		public FileLoggerProvider(string fileName) : this(fileName, true) {
 		}
@@ -74,15 +91,8 @@ namespace NReco.Logging.File {
 		}
 
 		public FileLoggerProvider(string fileName, FileLoggerOptions options) {
+			Options = options;
 			LogFileName = Environment.ExpandEnvironmentVariables(fileName);
-			Append = options.Append;
-			FileSizeLimitBytes = options.FileSizeLimitBytes;
-			MaxRollingFiles = options.MaxRollingFiles;
-			UseUtcTimestamp = options.UseUtcTimestamp;
-			FormatLogEntry = options.FormatLogEntry;
-			FormatLogFileName = options.FormatLogFileName;
-			HandleFileError = options.HandleFileError;
-			MinLevel = options.MinLevel;
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(

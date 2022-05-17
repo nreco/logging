@@ -77,6 +77,10 @@ namespace NReco.Logging.File {
 				message = formatter(state, exception);
 			}
 
+			if (LoggerPrv.Options.FilterLogEntry != null)
+				if (!LoggerPrv.Options.FilterLogEntry(new LogMessage(logName, logLevel, eventId, message, exception)))
+					return;
+
 			if (LoggerPrv.FormatLogEntry!=null) {
 				LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(
 					new LogMessage(logName, logLevel, eventId, message, exception)));
