@@ -202,9 +202,11 @@ namespace NReco.Logging.Tests
 		[Fact]
 		public void ExpandEnvironmentVariables()
 		{
-			var tmpDirEnvVarName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "TEMP" : "TMPDIR";
+			// this is windows-only test
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				return;
 
-			var tmpFileWithEnvironmentVariable = "%"+tmpDirEnvVarName+"%\\" + Path.GetFileName(Path.GetTempFileName());
+			var tmpFileWithEnvironmentVariable = "%TEMP%\\" + Path.GetFileName(Path.GetTempFileName());
 			var expandedTmpFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(tmpFileWithEnvironmentVariable));
 			try
 			{
