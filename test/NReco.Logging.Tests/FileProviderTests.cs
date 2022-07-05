@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Threading;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace NReco.Logging.Tests
 {
@@ -201,7 +202,9 @@ namespace NReco.Logging.Tests
 		[Fact]
 		public void ExpandEnvironmentVariables()
 		{
-			var tmpFileWithEnvironmentVariable = "%TEMP%\\" + Path.GetFileName(Path.GetTempFileName());
+			var tmpDirEnvVarName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "TEMP" : "TMPDIR";
+
+			var tmpFileWithEnvironmentVariable = "%"+tmpDirEnvVarName+"%\\" + Path.GetFileName(Path.GetTempFileName());
 			var expandedTmpFileName = Path.Combine(Path.GetTempPath(), Path.GetFileName(tmpFileWithEnvironmentVariable));
 			try
 			{
@@ -270,6 +273,9 @@ namespace NReco.Logging.Tests
 
 		[Fact]
 		public void FileOpenErrorHandling() {
+			// this is windows-only test
+			if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+				return;
 
 			var tmpDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 			var toDispose = new List<IDisposable>();
