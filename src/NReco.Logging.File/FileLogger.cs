@@ -72,10 +72,8 @@ namespace NReco.Logging.File {
 			if (formatter == null) {
 				throw new ArgumentNullException(nameof(formatter));
 			}
-			string message = null;
-			if (null != formatter) {
-				message = formatter(state, exception);
-			}
+
+			string message = formatter(state, exception);
 
 			if (LoggerPrv.Options.FilterLogEntry != null)
 				if (!LoggerPrv.Options.FilterLogEntry(new LogMessage(logName, logLevel, eventId, message, exception)))
