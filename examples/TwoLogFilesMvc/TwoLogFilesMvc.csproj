@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NReco.Logging.File" Version="1.1.5" />
+    <PackageReference Include="NReco.Logging.File" Version="1.1.6" />
   </ItemGroup>
 
   

@@ -43,8 +43,8 @@ namespace TwoLogFilesMvc
                     };
                 };
 
-                loggingBuilder.AddFile(loggingSection, resolveRelativeLoggingFilePath);
-                loggingBuilder.AddFile(Configuration.GetSection("LoggingFileTwo"), resolveRelativeLoggingFilePath);
+                loggingBuilder.AddFile(loggingSection.GetSection("FileOne"), resolveRelativeLoggingFilePath);
+                loggingBuilder.AddFile(loggingSection.GetSection("FileTwo"), resolveRelativeLoggingFilePath);
 
                 // alternatively, you can configure 2nd file logger (or both) in the code:
                 /*loggingBuilder.AddFile("logs/app_debug.log", (fileOpts) => {
