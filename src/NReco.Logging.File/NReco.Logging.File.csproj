@@ -1,13 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Standalone file logging provider for .NET Core without dependencies on the logging frameworks.</Description>
-    <Title>.NET Core file logger provider.</Title>
-	<Copyright>Copyright (c) 2017-2022 Vitalii Fedorchenko and contributors</Copyright>
+    <Description>Lightweight file logging provider implementation for NET6+ / .NET Core without dependencies on logging frameworks.
+	
+How to use:
+
+services.AddLogging(loggingBuilder => {
+	loggingBuilder.AddFile("app.log", append:true);
+});
+
+More details and examples: https://github.com/nreco/logging
+</Description>
+    <Title>NET6+ / .NET Core file logger provider.</Title>
+	<Copyright>Copyright (c) 2017-2023 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.1.5</VersionPrefix>
+    <VersionPrefix>1.1.6</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
-    <TargetFrameworks>netstandard2.0;netstandard1.3</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>NReco.Logging.File</AssemblyName>
     <PackageId>NReco.Logging.File</PackageId>
@@ -17,9 +26,13 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
 
+Version 1.1.6 changes:
+ - added ILoggerFactory.AddFile(string fileName, Action&lt;FileLoggerOptions&gt; configure) extension method
+ - now AddFile methods that accept IConfiguration may use it as a "File" section (only if there is no "File" sub-section) #50
+ - removed legacy netstandard1.3 build
+
 Version 1.1.5 changes:
  - added FileLoggerOptions.FilterLogEntry (custom predicate to filter log entries) #41
-
 
 Version 1.1.4 changes:
  - added FileLoggerOptions.UseUtcTimestamp to use UTC timestamp in the default log entry formatter #36
@@ -44,41 +57,23 @@ Version 1.0.5 changes:
 Version 1.0.4 changes:
  - added "File" provider alias for MVC Core 2 filtering rules
  - added 'rolling file' behaviour controlled with new FileLoggerProvider properties (FileSizeLimitBytes and MaxRollingFiles)</PackageReleaseNotes>
-    <GenerateAssemblyTitleAttribute>false</GenerateAssemblyTitleAttribute>
-    <GenerateAssemblyDescriptionAttribute>false</GenerateAssemblyDescriptionAttribute>
+    <GenerateAssemblyTitleAttribute>true</GenerateAssemblyTitleAttribute>
+    <GenerateAssemblyDescriptionAttribute>true</GenerateAssemblyDescriptionAttribute>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <GenerateAssemblyProductAttribute>true</GenerateAssemblyProductAttribute>
+    <GenerateAssemblyCopyrightAttribute>true</GenerateAssemblyCopyrightAttribute>
     <GenerateNeutralResourcesLanguageAttribute>false</GenerateNeutralResourcesLanguageAttribute>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyVersionAttribute>true</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>true</GenerateAssemblyFileVersionAttribute>
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <DefineConstants>$(DefineConstants);NETSTANDARD2</DefineConstants>
-  </PropertyGroup>   
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <DefineConstants>$(DefineConstants);NETSTANDARD1</DefineConstants>
-  </PropertyGroup>   
   
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+  <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.0.0" />
   </ItemGroup>
     
-  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="1.1.0" />
-	<PackageReference Include="Microsoft.Extensions.Logging.Filter" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="1.1.0"/>
-    <PackageReference Include="System.IO" Version="4.3.0" />
-    <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />	
-    <PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
-    <PackageReference Include="System.IO.FileSystem" Version="4.3.0" />	
-  </ItemGroup>
-
 </Project>

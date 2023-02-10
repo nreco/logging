@@ -28,8 +28,6 @@ namespace Microsoft.Extensions.Logging
     public static class FileLoggerExtensions
     {
 
-#if NETSTANDARD2
-
         /// <summary>
         /// Adds a file logger.
         /// </summary>
@@ -79,8 +77,6 @@ namespace Microsoft.Extensions.Logging
             return builder;
         }
 
-#endif
-
         /// <summary>
         /// Adds a file logger.
         /// </summary>
@@ -94,45 +90,49 @@ namespace Microsoft.Extensions.Logging
         }
 
         /// <summary>
+        /// Adds a file logger.
+        /// </summary>
+        /// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
+        /// <param name="fileName">log file name.</param>
+        /// <param name="configure">a handler that initializes <see cref="FileLoggerOptions"/>.</param>
+        public static ILoggerFactory AddFile(this ILoggerFactory factory, string fileName, Action<FileLoggerOptions> configure) {
+            var fileLoggerOptions = new FileLoggerOptions();
+            configure(fileLoggerOptions);
+            factory.AddProvider(new FileLoggerProvider(fileName, fileLoggerOptions));
+            return factory;
+        }
+
+        /// <summary>
         /// Adds a file logger and configures it with given <see cref="IConfiguration"/> (usually "Logging" section).
         /// </summary>
         /// <param name="factory">The <see cref="ILoggerFactory"/> to use.</param>
         /// <param name="configuration">The <see cref="IConfiguration"/> to use getting <see cref="FileLoggerProvider"/> settings.</param>
+        /// <param name="configure">a handler that initializes <see cref="FileLoggerOptions"/>.</param>
         public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration, Action<FileLoggerOptions> configure = null)
         {
             var prvFactory = factory;
             var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
             if (fileLoggerPrv == null)
                 return factory;
-#if NETSTANDARD1
-			var loggerSettings = new FilterLoggerSettings();
-			var logLevelsCfg = configuration.GetSection("LogLevel");
-			bool hasFilter = false;
-			if (logLevelsCfg!=null) {
-				var logLevels = logLevelsCfg.GetChildren();
-				foreach (var logLevel in logLevels) {
-					var logLevelValue = default(LogLevel);
-					Enum.TryParse(logLevel.Value, ignoreCase: true, result: out logLevelValue);
-					loggerSettings.Add(logLevel.Key, logLevelValue);
-					hasFilter = true;
-				}
-			}
-			if (hasFilter)
-				prvFactory = prvFactory.WithFilter(loggerSettings);
-#endif
-
             prvFactory.AddProvider(fileLoggerPrv);
             return factory;
         }
 
         private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration, Action<FileLoggerOptions> configure)
         {
-            var fileSection = configuration.GetSection("File");
-            if (fileSection == null)
-                return null;  // file logger is not configured
-
             var config = new FileLoggerConfig();
-            fileSection.Bind(config);
+            var fileSection = configuration.GetSection("File");
+            if (!fileSection.Exists()) {
+                var pathValue = configuration["Path"];
+                if (String.IsNullOrEmpty(pathValue))
+                    return null;  // file logger is not configured
+                else {
+                    // configuration contains "Path" property so this is explicitly-passed configuration section
+                    configuration.Bind(config);
+                }
+            } else {
+                fileSection.Bind(config);
+            }
 
             if (String.IsNullOrWhiteSpace(config.Path))
                 return null; // file logger is not configured
