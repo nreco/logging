@@ -1,0 +1,30 @@
+﻿@model System.Collections.IDictionary
+	
+<h1>
+	NReco.File.Logging demo
+	<small style="color:silver;">lightweight logging to files</small>
+</h1>
+
+<form action="@Url.Action("LogMessage", "LoggingDemo")" target="submitResult" method="post">
+
+	<table border="0">
+		<tr>
+			<th>LogLevel</th>
+			<td>
+				<select name="logLevel">
+					<option value="Debug">Debug</option>
+					<option value="Information">Information</option>
+					<option value="Warning">Warning</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>Message</th>
+			<td><input type="text" name="msg" value="This is a log message!"/></td>
+		</tr>
+	</table>
+
+	<button type="submit">Add</button>
+</form>
+
+<iframe name="submitResult" style="display:none;"></iframe>
