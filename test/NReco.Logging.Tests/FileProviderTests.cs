@@ -288,14 +288,14 @@ namespace NReco.Logging.Tests
 				toDispose.Add(factory);
 				factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { }));
 				var logger = factory.CreateLogger("TEST");
-				writeSomethingToLogger(logger);
+				writeSomethingToLogger(logger, 15);
 
 				Assert.Throws<IOException>(() => {
 					// now try to use currently used file in another logger
 					var factory2 = new LoggerFactory();
 					factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { }));
 					var logger2 = factory2.CreateLogger("TEST");
-					writeSomethingToLogger(logger2);
+					writeSomethingToLogger(logger2, 15);
 				});
 
 				var errorHandled = false;
@@ -309,7 +309,7 @@ namespace NReco.Logging.Tests
 					}
 				}));
 				var logger2 = factory2.CreateLogger("TEST");
-				writeSomethingToLogger(logger2);
+				writeSomethingToLogger(logger2, 15);
 				Assert.True(errorHandled);
 				factory2.Dispose();
 				// ensure that alt file name was used
@@ -321,10 +321,54 @@ namespace NReco.Logging.Tests
 				CleanupTempDir(tmpDir, toDispose);
 			}
 
-			void writeSomethingToLogger(ILogger log) {
-				for (int i = 0; i < 15; i++) {
-					log.LogInformation("Line" + (i + 1).ToString());
-				}
+		}
+
+		void writeSomethingToLogger(ILogger log, int msgCount) {
+			for (int i = 0; i < msgCount; i++) {
+				log.LogInformation("Line" + (i + 1).ToString());
+			}
+		}
+
+		[Theory]
+		[InlineData(false)]
+		[InlineData(true)]
+		public void FileWriteErrorHandling(bool useNewLogFile) {
+			var tmpDir = Path.Combine( Path.GetTempPath(), Guid.NewGuid().ToString());
+			var logFileName = Path.Combine(tmpDir, "testfile.log");
+			var fallbackLogFileName = Path.Combine(tmpDir, "fallbackfile.log");
+
+			var factory = new LoggerFactory();
+			var fileLoggerOpts = new FileLoggerOptions() { };
+			if (useNewLogFile) {
+				fileLoggerOpts.HandleFileError = (fileErr) => {
+					fileErr.UseNewLogFileName(fallbackLogFileName);
+				};
+			}
+			var fileLogPrv = new FileLoggerProvider(logFileName, fileLoggerOpts);
+			factory.AddProvider(fileLogPrv);
+			var logger = factory.CreateLogger("TEST");
+			writeSomethingToLogger(logger, 1);
+
+
+			var logFileWr = fileLogPrv.GetType()
+					.GetField("fWriter", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+					.GetValue(fileLogPrv);
+			// close file handler, this will cause an exception inside FileLoggerProvider.ProcessQueue 
+			var logFileStream = (Stream)logFileWr.GetType()
+				.GetField("LogFileStream", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+				.GetValue(logFileWr);
+			logFileStream.Close();
+
+			var t = Task.Run(() => {
+				writeSomethingToLogger(logger, 2000);
+			});
+			Assert.True(t.Wait(1000), "Logger queue blocks app's log calls.");
+
+			factory.Dispose();
+
+			if (useNewLogFile) {
+				// ensure that it is not empty and was used
+				Assert.True( new System.IO.FileInfo(fallbackLogFileName).Length > 0, "Alternative log file name was not used.");
 			}
 		}
 

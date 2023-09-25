@@ -127,8 +127,35 @@ namespace NReco.Logging.File {
 			// do nothing
 		}
 		private void ProcessQueue() {
+			var writeMessageFailed = false;
 			foreach (var message in entryQueue.GetConsumingEnumerable()) {
-				fWriter.WriteMessage(message, entryQueue.Count==0);
+				try {
+					if (!writeMessageFailed)
+						fWriter.WriteMessage(message, entryQueue.Count == 0);
+				} catch (Exception ex) {
+					// something goes wrong. App's code can handle it if 'HandleFileError' is provided
+					var stopLogging = true;
+					if (HandleFileError != null) {
+						var fileErr = new FileError(LogFileName, ex);
+						try {
+							HandleFileError(fileErr);
+							if (fileErr.NewLogFileName != null) {
+								fWriter.UseNewLogFile(fileErr.NewLogFileName);
+								// write failed message to a new log file
+								fWriter.WriteMessage(message, entryQueue.Count == 0);
+								stopLogging = false;
+							}
+						} catch {
+							// exception is possible in HandleFileError or if proposed file name cannot be used
+							// let's ignore it in that case -> file logger will stop processing log messages
+						}
+					}
+					if (stopLogging) {
+						// Stop processing log messages since they cannot be written to a log file
+						entryQueue.CompleteAdding();
+						writeMessageFailed = true;
+					}
+				}
 			}
 		}
 
@@ -183,37 +210,39 @@ namespace NReco.Logging.File {
 				}
 			}
 
-			void OpenFile(bool append) {
+			void createLogFileStream(bool append) {
+				var fileInfo = new FileInfo(LogFileName);
+				// Directory.Create will check if the directory already exists,
+				// so there is no need for a "manual" check first.
+				fileInfo.Directory.Create();
 
+				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
+				if (append) {
+					LogFileStream.Seek(0, SeekOrigin.End);
+				} else {
+					LogFileStream.SetLength(0); // clear the file
+				}
+				LogFileWriter = new StreamWriter(LogFileStream);
+			}
+
+			internal void UseNewLogFile(string newLogFileName) {
+				FileLogPrv.LogFileName = newLogFileName;
+				DetermineLastFileLogName(); // preserve all existing logic related to 'FormatLogFileName' and rolling files
+				createLogFileStream(FileLogPrv.Append);  // if file error occurs here it is not handled by 'HandleFileError' recursively
+			}
+
+			void OpenFile(bool append) {
 				try {
-					createLogFileStream();
+					createLogFileStream(append);
 				} catch (Exception ex) {
 					if (FileLogPrv.HandleFileError!=null) {
 						var fileErr = new FileError(LogFileName, ex);
 						FileLogPrv.HandleFileError(fileErr);
 						if (fileErr.NewLogFileName!=null) {
-							FileLogPrv.LogFileName = fileErr.NewLogFileName;
-							DetermineLastFileLogName(); // preserve all existing logic related to 'FormatLogFileName' and rolling files
-							createLogFileStream();  // if error occurs it is not handled recursively
+							UseNewLogFile(fileErr.NewLogFileName);
 						}
 					} else {
 						throw; // do not handle by default to preserve backward compatibility
-					}
-				}
-
-				LogFileWriter = new StreamWriter(LogFileStream);
-
-				void createLogFileStream() {
-					var fileInfo = new FileInfo(LogFileName);
-					// Directory.Create will check if the directory already exists,
-					// so there is no need for a "manual" check first.
-					fileInfo.Directory.Create();
-
-					LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
-					if (append) {
-						LogFileStream.Seek(0, SeekOrigin.End);
-					} else {
-						LogFileStream.SetLength(0); // clear the file
 					}
 				}
 			}
