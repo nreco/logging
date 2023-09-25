@@ -14,7 +14,7 @@ More details and examples: https://github.com/nreco/logging
     <Title>NET6+ / .NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2023 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.1.6</VersionPrefix>
+    <VersionPrefix>1.1.7</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -25,6 +25,9 @@ More details and examples: https://github.com/nreco/logging
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+
+Version 1.1.7 changes:
+ - bugfix: App deadlock on FileLoggerProvider.WriteEntry #57
 
 Version 1.1.6 changes:
  - added ILoggerFactory.AddFile(string fileName, Action&lt;FileLoggerOptions&gt; configure) extension method
