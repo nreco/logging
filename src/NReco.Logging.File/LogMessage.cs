@@ -13,13 +13,12 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Text;
+
 using Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File
 {
-	public struct LogMessage {
+    public struct LogMessage {
 		public readonly string LogName;
 		public readonly string Message;
 		public readonly LogLevel LogLevel;

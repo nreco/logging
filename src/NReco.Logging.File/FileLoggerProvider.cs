@@ -13,22 +13,20 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.IO;
 using System.Collections.Concurrent;
-using System.Text;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 
-namespace NReco.Logging.File {
+namespace NReco.Logging.File
+{
 
-	/// <summary>
-	/// Generic file logger provider.
-	/// </summary>
-	[ProviderAlias("File")]
+    /// <summary>
+    /// Generic file logger provider.
+    /// </summary>
+    [ProviderAlias("File")]
 	public class FileLoggerProvider : ILoggerProvider {
 
 		private string LogFileName;

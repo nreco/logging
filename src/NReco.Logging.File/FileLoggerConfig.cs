@@ -12,16 +12,7 @@
  */
 #endregion
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.IO;
-using System.Collections.Concurrent;
-using System.Text;
-
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
 
 namespace NReco.Logging.File
 {
@@ -62,6 +53,4 @@ namespace NReco.Logging.File
         /// </summary>
         public LogLevel MinLevel { get; set; } = LogLevel.Trace;
     }
-
-
 }
