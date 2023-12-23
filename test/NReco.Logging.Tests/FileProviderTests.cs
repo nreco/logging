@@ -23,7 +23,7 @@ namespace NReco.Logging.Tests
 				logger.LogInformation("Line1");
 				factory.Dispose();
 
-				Assert.Equal(1, System.IO.File.ReadAllLines(tmpFile).Length);
+				Assert.Single(System.IO.File.ReadAllLines(tmpFile));
 
 				factory = new LoggerFactory();
 				logger = factory.CreateLogger("TEST");
@@ -31,7 +31,7 @@ namespace NReco.Logging.Tests
 				logger.LogInformation("Line2");
 				factory.Dispose();
 
-				Assert.Equal(1, System.IO.File.ReadAllLines(tmpFile).Length);  // file should be overwritten
+				Assert.Single(System.IO.File.ReadAllLines(tmpFile));  // file should be overwritten
 
 			} finally {
 				System.IO.File.Delete(tmpFile);
@@ -148,11 +148,11 @@ namespace NReco.Logging.Tests
 							}
 						})
 					);
+                }
+                Task.WaitAll(writeTasks.ToArray());
 
-				}
-				Task.WaitAll(writeTasks.ToArray());
+                factory.Dispose();
 
-				factory.Dispose();
 				int lines = 0;
 				using (var fileStream = new FileStream(tmpFile, FileMode.Open, FileAccess.Read)) {
 					using (var rdr = new StreamReader(fileStream)) {
@@ -393,7 +393,7 @@ namespace NReco.Logging.Tests
 
 				var logLines = System.IO.File.ReadAllLines(logFileName);
 				Assert.Single(logLines);
-				Assert.False(logLines[0].Contains("TEST2"));
+				Assert.DoesNotContain(logLines[0], "TEST2");
 			} finally {
 				CleanupTempDir(tmpDir, new[] { factory });
 			}
