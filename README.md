@@ -1,7 +1,9 @@
 # NReco.Logging.File
 Simple and efficient file logger provider for .NET Core (any version) / NET5 / NET6 without additional dependencies.
 
-[![NuGet Release](https://img.shields.io/nuget/v/NReco.Logging.File.svg)](https://www.nuget.org/packages/NReco.Logging.File/)
+NuGet | Tests
+--- | --- 
+[![NuGet Release](https://img.shields.io/nuget/v/NReco.Logging.File.svg)](https://www.nuget.org/packages/NReco.Logging.File/) | ![Tests](https://github.com/nreco/logging/actions/workflows/dotnet-test.yml/badge.svg) 
 
 * very similar to standard ConsoleLogger but writes to a file
 * can append to existing file or overwrite log file on restart
@@ -12,6 +14,8 @@ Simple and efficient file logger provider for .NET Core (any version) / NET5 / N
 ## How to use
 Add *NReco.Logging.File* package reference and initialize a file logging provider in `services.AddLogging` (Startup.cs):
 ```
+using NReco.Logging.File;
+
 services.AddLogging(loggingBuilder => {
 	loggingBuilder.AddFile("app.log", append:true);
 });
