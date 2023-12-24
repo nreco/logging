@@ -1,9 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Lightweight file logging provider implementation for NET6+ / .NET Core without dependencies on logging frameworks.
+    <Description>Lightweight file logging provider implementation for NET6 / NET8+ / .NET Core without dependencies on logging frameworks.
 	
 How to use:
+
+using NReco.Logging.File;
 
 services.AddLogging(loggingBuilder => {
 	loggingBuilder.AddFile("app.log", append:true);
@@ -11,12 +13,12 @@ services.AddLogging(loggingBuilder => {
 
 More details and examples: https://github.com/nreco/logging
 </Description>
-    <Title>NET6+ / .NET Core file logger provider.</Title>
+    <Title>NET8/ NET6 / .NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2023 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.1.7</VersionPrefix>
+    <VersionPrefix>1.2.0</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>NReco.Logging.File</AssemblyName>
     <PackageId>NReco.Logging.File</PackageId>
@@ -25,6 +27,9 @@ More details and examples: https://github.com/nreco/logging
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+Version 1.2.0 changes:
+ - NReco's FileLoggerExtensions should NOT be in the Microsoft.Extensions.Logging namespace #61
+ - Added net6 and net8 builds to reference appropriate Microsoft.Logging.Extensions versions
 
 Version 1.1.7 changes:
  - bugfix: App deadlock on FileLoggerProvider.WriteEntry #57
@@ -73,10 +78,22 @@ Version 1.0.4 changes:
     <AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="2.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="2.0.0" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="3.*" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.*" /> 
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="6.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.*" />  
   </ItemGroup>
     
 </Project>

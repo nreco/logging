@@ -1,5 +1,5 @@
 # NReco.Logging.File
-Simple and efficient file logger provider for .NET Core (any version) / NET5 / NET6 without additional dependencies.
+Simple and efficient file logger provider for .NET Core (any version) / NET6 / NET8 without additional dependencies.
 
 NuGet | Tests
 --- | --- 
