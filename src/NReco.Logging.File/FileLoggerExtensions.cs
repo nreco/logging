@@ -16,14 +16,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using NReco.Logging.File;
 
-namespace Microsoft.Extensions.Logging
-{
+namespace NReco.Logging.File {
 
     public static class FileLoggerExtensions
     {
