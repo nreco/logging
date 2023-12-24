@@ -18,7 +18,7 @@ jobs:
       with:
         dotnet-version: 6.0.x
     - name: Restore dependencies
-      run: dotnet restore test
+      run: dotnet restore test -property:TargetFrameworks=net6.0
     - name: Build Lib
       run: dotnet build src/NReco.Logging.File -property:TargetFrameworks=net6.0 --no-restore      
     - name: Build
