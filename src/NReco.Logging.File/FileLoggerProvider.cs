@@ -334,7 +334,12 @@ namespace NReco.Logging.File
 					{
 						RollingNumber %= FileLogPrv.MaxRollingFiles - 1;
 					}
-					System.IO.File.Move(baseLogFileName, GetFileFromIndex(baseLogFileName, RollingNumber + 1));
+					var moveFile = GetFileFromIndex(baseLogFileName, RollingNumber + 1);
+					if (System.IO.File.Exists(moveFile))
+					{
+						System.IO.File.Delete(moveFile);
+					}
+                    System.IO.File.Move(baseLogFileName, moveFile);
 					return baseLogFileName;
 				}
 				else if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.Unix)
@@ -346,11 +351,16 @@ namespace NReco.Logging.File
 						foreach (var finfo in logFiles.OrderByDescending(fInfo => fInfo.Name))
 						{
 							var index = GetIndexFromFile(baseLogFileName, finfo.Name);
-							if (FileLogPrv.MaxRollingFiles > 0 && index < FileLogPrv.MaxRollingFiles - 1)
+							if (FileLogPrv.MaxRollingFiles > 0 && index >= FileLogPrv.MaxRollingFiles - 1)
 							{
 								continue;
-							}
-							System.IO.File.Move(finfo.Name, GetFileFromIndex(baseLogFileName, index + 1));
+                            }
+                            var moveFile = GetFileFromIndex(baseLogFileName, index + 1);
+                            if (System.IO.File.Exists(moveFile))
+                            {
+                                System.IO.File.Delete(moveFile);
+                            }
+                            System.IO.File.Move(finfo.FullName, moveFile);
 						}
 					}
 					return baseLogFileName;
