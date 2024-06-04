@@ -14,14 +14,14 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v3
       with:
-        dotnet-version: 6.0.x
+        dotnet-version: '8.0.x'
     - name: Restore dependencies
-      run: dotnet restore test -property:TargetFrameworks=net6.0
+      run: dotnet restore test -property:TargetFrameworks=net8.0
     - name: Build Lib
-      run: dotnet build src/NReco.Logging.File -property:TargetFrameworks=net6.0 --no-restore      
+      run: dotnet build src/NReco.Logging.File -property:TargetFrameworks=net8.0 --no-restore      
     - name: Build
-      run: dotnet build test -property:TargetFrameworks=net6.0 --no-restore
+      run: dotnet build test -property:TargetFrameworks=net8.0 --no-restore
     - name: Test
-      run: dotnet test test -property:TargetFrameworks=net6.0 --no-build --verbosity normal
+      run: dotnet test test -property:TargetFrameworks=net8.0 --no-build --verbosity normal
