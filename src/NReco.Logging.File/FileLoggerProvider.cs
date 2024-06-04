@@ -46,23 +46,23 @@ namespace NReco.Logging.File {
 		private int MaxRollingFiles => Options.MaxRollingFiles;
 
 		public LogLevel MinLevel {
-			get => Options.MinLevel; 
+			get => Options.MinLevel;
 			set { Options.MinLevel = value; }
 		}
 
 		/// <summary>
 		///  Gets or sets indication whether or not UTC timezone should be used to for timestamps in logging messages. Defaults to false.
 		/// </summary>
-		public bool UseUtcTimestamp { 
-			get => Options.UseUtcTimestamp; 
-			set { Options.UseUtcTimestamp = value; } 
+		public bool UseUtcTimestamp {
+			get => Options.UseUtcTimestamp;
+			set { Options.UseUtcTimestamp = value; }
 		}
 
 		/// <summary>
 		/// Custom formatter for log entry. 
 		/// </summary>
-		public Func<LogMessage,string> FormatLogEntry {
-			get => Options.FormatLogEntry; 
+		public Func<LogMessage, string> FormatLogEntry {
+			get => Options.FormatLogEntry;
 			set { Options.FormatLogEntry = value; }
 		}
 
@@ -70,7 +70,7 @@ namespace NReco.Logging.File {
 		/// Custom formatter for the log file name.
 		/// </summary>
 		public Func<string, string> FormatLogFileName {
-			get => Options.FormatLogFileName; 
+			get => Options.FormatLogFileName;
 			set { Options.FormatLogFileName = value; }
 		}
 
@@ -79,13 +79,13 @@ namespace NReco.Logging.File {
 		/// </summary>
 		public Action<FileError> HandleFileError {
 			get => Options.HandleFileError;
-			set { Options.HandleFileError = value; } 
+			set { Options.HandleFileError = value; }
 		}
 
 		public FileLoggerProvider(string fileName) : this(fileName, true) {
 		}
 
-		public FileLoggerProvider(string fileName, bool append) : this(fileName, new FileLoggerOptions() { Append = append } ) {
+		public FileLoggerProvider(string fileName, bool append) : this(fileName, new FileLoggerOptions() { Append = append }) {
 		}
 
 		public FileLoggerProvider(string fileName, FileLoggerOptions options) {
@@ -107,7 +107,9 @@ namespace NReco.Logging.File {
 			entryQueue.CompleteAdding();
 			try {
 				processQueueTask.Wait(1500);  // the same as in ConsoleLogger
-			} catch (TaskCanceledException) { } catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
+			}
+			catch (TaskCanceledException) { }
+			catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
 
 			loggers.Clear();
 			fWriter.Close();
@@ -122,7 +124,8 @@ namespace NReco.Logging.File {
 				try {
 					entryQueue.Add(message);
 					return;
-				} catch (InvalidOperationException) { }
+				}
+				catch (InvalidOperationException) { }
 			}
 			// do nothing
 		}
@@ -132,7 +135,8 @@ namespace NReco.Logging.File {
 				try {
 					if (!writeMessageFailed)
 						fWriter.WriteMessage(message, entryQueue.Count == 0);
-				} catch (Exception ex) {
+				}
+				catch (Exception ex) {
 					// something goes wrong. App's code can handle it if 'HandleFileError' is provided
 					var stopLogging = true;
 					if (HandleFileError != null) {
@@ -145,7 +149,8 @@ namespace NReco.Logging.File {
 								fWriter.WriteMessage(message, entryQueue.Count == 0);
 								stopLogging = false;
 							}
-						} catch {
+						}
+						catch {
 							// exception is possible in HandleFileError or if proposed file name cannot be used
 							// let's ignore it in that case -> file logger will stop processing log messages
 						}
@@ -168,6 +173,7 @@ namespace NReco.Logging.File {
 
 			readonly FileLoggerProvider FileLogPrv;
 			string LogFileName;
+			int RollingNumber;
 			Stream LogFileStream;
 			TextWriter LogFileWriter;
 
@@ -188,24 +194,26 @@ namespace NReco.Logging.File {
 			void DetermineLastFileLogName() {
 				var baseLogFileName = GetBaseLogFileName();
 				__LastBaseLogFileName = baseLogFileName;
-				if (FileLogPrv.FileSizeLimitBytes>0) {
+				if (FileLogPrv.FileSizeLimitBytes > 0) {
 					// rolling file is used
-					var logFileMask = Path.GetFileNameWithoutExtension(baseLogFileName) + "*" + Path.GetExtension(baseLogFileName);
-					var logDirName = Path.GetDirectoryName(baseLogFileName);
-					if (String.IsNullOrEmpty(logDirName))
-						logDirName = Directory.GetCurrentDirectory();
-					var logFiles = Directory.Exists(logDirName) ? Directory.GetFiles(logDirName, logFileMask, SearchOption.TopDirectoryOnly) : Array.Empty<string>();
-					if (logFiles.Length>0) {
-						var lastFileInfo = logFiles
-								.Select(fName => new FileInfo(fName))
-								.OrderByDescending(fInfo => fInfo.Name)
-								.OrderByDescending(fInfo => fInfo.LastWriteTime).First();
-						LogFileName = lastFileInfo.FullName;
-					} else {
-						// no files yet, use default name
+					if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.Ascending) {
+						var logFiles = GetExistingLogFiles(baseLogFileName);
+						if (logFiles.Length > 0) {
+							var lastFileInfo = logFiles
+									.OrderByDescending(fInfo => fInfo.Name)
+									.OrderByDescending(fInfo => fInfo.LastWriteTime).First();
+							LogFileName = lastFileInfo.FullName;
+						}
+						else {
+							// no files yet, use default name
+							LogFileName = baseLogFileName;
+						}
+					}
+					else {
 						LogFileName = baseLogFileName;
 					}
-				} else {
+				}
+				else {
 					LogFileName = baseLogFileName;
 				}
 			}
@@ -219,7 +227,8 @@ namespace NReco.Logging.File {
 				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
 				if (append) {
 					LogFileStream.Seek(0, SeekOrigin.End);
-				} else {
+				}
+				else {
 					LogFileStream.SetLength(0); // clear the file
 				}
 				LogFileWriter = new StreamWriter(LogFileStream);
@@ -234,14 +243,16 @@ namespace NReco.Logging.File {
 			void OpenFile(bool append) {
 				try {
 					createLogFileStream(append);
-				} catch (Exception ex) {
-					if (FileLogPrv.HandleFileError!=null) {
+				}
+				catch (Exception ex) {
+					if (FileLogPrv.HandleFileError != null) {
 						var fileErr = new FileError(LogFileName, ex);
 						FileLogPrv.HandleFileError(fileErr);
-						if (fileErr.NewLogFileName!=null) {
+						if (fileErr.NewLogFileName != null) {
 							UseNewLogFile(fileErr.NewLogFileName);
 						}
-					} else {
+					}
+					else {
 						throw; // do not handle by default to preserve backward compatibility
 					}
 				}
@@ -251,26 +262,52 @@ namespace NReco.Logging.File {
 			string GetNextFileLogName() {
 				var baseLogFileName = GetBaseLogFileName();
 				// if file does not exist or file size limit is not reached - do not add rolling file index
-				if (!System.IO.File.Exists(baseLogFileName) || 
-					FileLogPrv.FileSizeLimitBytes <= 0 || 
-					new System.IO.FileInfo(baseLogFileName).Length< FileLogPrv.FileSizeLimitBytes)
+				if (!System.IO.File.Exists(baseLogFileName) ||
+					FileLogPrv.FileSizeLimitBytes <= 0 ||
+					new System.IO.FileInfo(baseLogFileName).Length < FileLogPrv.FileSizeLimitBytes)
 					return baseLogFileName;
 
-				int currentFileIndex = 0;
-				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName);
-				var currentFileNameOnly = Path.GetFileNameWithoutExtension(LogFileName);
-
-				var suffix = currentFileNameOnly.Substring(baseFileNameOnly.Length);
-				if (suffix.Length>0 && Int32.TryParse(suffix, out var parsedIndex)) {
-					currentFileIndex = parsedIndex;
+				if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.Ascending) {
+					//Unchanged default handling just optimized for performance and code reuse
+					int currentFileIndex = GetIndexFromFile(baseLogFileName, LogFileName);
+					var nextFileIndex = currentFileIndex + 1;
+					if (FileLogPrv.MaxRollingFiles > 0) {
+						nextFileIndex %= FileLogPrv.MaxRollingFiles;
+					}
+					return GetFileFromIndex(baseLogFileName, nextFileIndex);
 				}
-				var nextFileIndex = currentFileIndex + 1;
-				if (FileLogPrv.MaxRollingFiles > 0) {
-					nextFileIndex %= FileLogPrv.MaxRollingFiles;
+				else if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.AscendingStableBase) {
+					//Move current base file to next rolling file number
+					RollingNumber++;
+					if (FileLogPrv.MaxRollingFiles > 0) {
+						RollingNumber %= FileLogPrv.MaxRollingFiles - 1;
+					}
+					var moveFile = GetFileFromIndex(baseLogFileName, RollingNumber + 1);
+					if (System.IO.File.Exists(moveFile)) {
+						System.IO.File.Delete(moveFile);
+					}
+					System.IO.File.Move(baseLogFileName, moveFile);
+					return baseLogFileName;
 				}
-
-				var nextFileName = baseFileNameOnly + (nextFileIndex>0 ? nextFileIndex.ToString() : "") + Path.GetExtension(baseLogFileName);
-				return Path.Combine(Path.GetDirectoryName(baseLogFileName), nextFileName );
+				else if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.Descending) {
+					//Move all existing files to index +1 except if they are > MaxRollingFiles
+					var logFiles = GetExistingLogFiles(baseLogFileName);
+					if (logFiles.Length > 0) {
+						foreach (var finfo in logFiles.OrderByDescending(fInfo => fInfo.Name)) {
+							var index = GetIndexFromFile(baseLogFileName, finfo.Name);
+							if (FileLogPrv.MaxRollingFiles > 0 && index >= FileLogPrv.MaxRollingFiles - 1) {
+								continue;
+							}
+							var moveFile = GetFileFromIndex(baseLogFileName, index + 1);
+							if (System.IO.File.Exists(moveFile)) {
+								System.IO.File.Delete(moveFile);
+							}
+							System.IO.File.Move(finfo.FullName, moveFile);
+						}
+					}
+					return baseLogFileName;
+				}
+				throw new NotImplementedException("RollingFilesConvention");
 			}
 
 			// cache last returned base log file name to avoid excessive checks in CheckForNewLogFile.isBaseFileNameChanged
@@ -291,9 +328,9 @@ namespace NReco.Logging.File {
 					return FileLogPrv.FileSizeLimitBytes > 0 && LogFileStream.Length > FileLogPrv.FileSizeLimitBytes;
 				}
 				bool isBaseFileNameChanged() {
-					if (FileLogPrv.FormatLogFileName!=null) {
+					if (FileLogPrv.FormatLogFileName != null) {
 						var baseLogFileName = GetBaseLogFileName();
-						if (baseLogFileName!=__LastBaseLogFileName) {
+						if (baseLogFileName != __LastBaseLogFileName) {
 							__LastBaseLogFileName = baseLogFileName;
 							return true;
 						}
@@ -312,8 +349,48 @@ namespace NReco.Logging.File {
 				}
 			}
 
+			/// <summary>
+			/// Returns the index of a file or 0 if none found
+			/// </summary>
+			private int GetIndexFromFile(string baseLogFileName, string filename) {
+#if NETSTANDARD
+				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName);
+				var currentFileNameOnly = Path.GetFileNameWithoutExtension(filename);
+
+				var suffix = currentFileNameOnly.Substring(baseFileNameOnly.Length);
+#else
+				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName.AsSpan());
+				var currentFileNameOnly = Path.GetFileNameWithoutExtension(filename.AsSpan());
+
+				var suffix = currentFileNameOnly.Slice(baseFileNameOnly.Length);
+#endif
+				if (suffix.Length > 0 && Int32.TryParse(suffix, out var parsedIndex)) {
+					return parsedIndex;
+				}
+				return 0;
+			}
+
+			private string GetFileFromIndex(string baseLogFileName, int index) {
+#if NETSTANDARD
+				var nextFileName = Path.GetFileNameWithoutExtension(baseLogFileName) + (index > 0 ? index.ToString() : "") + Path.GetExtension(baseLogFileName);
+				return Path.Combine(Path.GetDirectoryName(baseLogFileName), nextFileName);
+#else
+				var nextFileName = string.Concat(Path.GetFileNameWithoutExtension(baseLogFileName.AsSpan()), index > 0 ? index.ToString() : "", Path.GetExtension(baseLogFileName.AsSpan()));
+				return string.Concat(Path.Join(Path.GetDirectoryName(baseLogFileName.AsSpan()), nextFileName.AsSpan()));
+#endif
+			}
+
+			FileInfo[] GetExistingLogFiles(string baseLogFileName) {
+				var logFileMask = Path.GetFileNameWithoutExtension(baseLogFileName) + "*" + Path.GetExtension(baseLogFileName);
+				var logDirName = Path.GetDirectoryName(baseLogFileName);
+				if (String.IsNullOrEmpty(logDirName))
+					logDirName = Directory.GetCurrentDirectory();
+				var logdir = new DirectoryInfo(logDirName);
+				return logdir.Exists ? logdir.GetFiles(logFileMask, SearchOption.TopDirectoryOnly) : Array.Empty<FileInfo>();
+			}
+
 			internal void Close() {
-				if (LogFileWriter!=null) {
+				if (LogFileWriter != null) {
 					var logWriter = LogFileWriter;
 					LogFileWriter = null;
 
