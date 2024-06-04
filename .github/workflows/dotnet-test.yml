@@ -22,6 +22,6 @@ jobs:
     - name: Build Lib
       run: dotnet build src/NReco.Logging.File -property:TargetFrameworks=net8.0 --no-restore      
     - name: Build
-      run: dotnet build test -property:TargetFrameworks=net8.0 --no-restore
+      run: dotnet build test -property:TargetFramework=net8.0 --no-restore
     - name: Test
-      run: dotnet test test -property:TargetFrameworks=net8.0 --no-build --verbosity normal
+      run: dotnet test test -property:TargetFramework=net8.0 --no-build --verbosity normal
