@@ -14,9 +14,9 @@ services.AddLogging(loggingBuilder => {
 More details and examples: https://github.com/nreco/logging
 </Description>
     <Title>NET8/ NET6 / .NET Core file logger provider.</Title>
-	<Copyright>Copyright (c) 2017-2023 Vitalii Fedorchenko and contributors</Copyright>
+	<Copyright>Copyright (c) 2017-2024 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.2.0</VersionPrefix>
+    <VersionPrefix>1.2.1</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -27,6 +27,10 @@ More details and examples: https://github.com/nreco/logging
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+	
+Version 1.2.1 changes:
+ - Added different rolling name conventions #66 (unix-style is supported with 'Descending' convention)
+	
 Version 1.2.0 changes:
  - NReco's FileLoggerExtensions should NOT be in the Microsoft.Extensions.Logging namespace #61
  - Added net6 and net8 builds to reference appropriate Microsoft.Logging.Extensions versions
