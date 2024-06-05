@@ -28,8 +28,7 @@ namespace NReco.Logging.File {
 	/// <summary>
 	/// Generic file logger options.
 	/// </summary>
-	public class FileLoggerOptions
-	{
+	public class FileLoggerOptions {
 		/// <summary>
 		/// Append to existing log files or override them.
 		/// </summary>
@@ -102,20 +101,19 @@ namespace NReco.Logging.File {
 		/// Determines the naming convention and order of rolling files.
 		/// </summary>
 		public FileRollingConvention RollingFilesConvention { get; set; } = FileRollingConvention.Ascending;
-		
+
 		/// <summary>
 		/// Holds the different file rolling convention, the default option being Ascending.
 		/// </summary>
-		public enum FileRollingConvention
-        {
-            /// <summary>
-            /// (Default) New files will get an ascending rolling index, files get rolled after max 0-1-2-3-0-1-2-3.
-            /// </summary>
-            Ascending,
-            /// <summary>
-            /// New files will get an ascending rolling index, but the latest file is always the file without index. More performant alt for descending rolling. 0-1-2-3-1-2-3
-            /// </summary>
-            AscendingStableBase,
+		public enum FileRollingConvention {
+			/// <summary>
+			/// (Default) New files will get an ascending rolling index, files get rolled after max 0-1-2-3-0-1-2-3.
+			/// </summary>
+			Ascending,
+			/// <summary>
+			/// New files will get an ascending rolling index, but the latest file is always the file without index. More performant alt for descending rolling. 0-1-2-3-1-2-3
+			/// </summary>
+			AscendingStableBase,
 			/// <summary>
 			/// Unix like descending logging, the base will always be stable and contain the latest logs, new files will be incremented and renamed so the highest number is always the oldest. 0-1-2-3
 			/// </summary>

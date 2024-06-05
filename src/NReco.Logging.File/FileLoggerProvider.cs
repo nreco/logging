@@ -107,9 +107,8 @@ namespace NReco.Logging.File {
 			entryQueue.CompleteAdding();
 			try {
 				processQueueTask.Wait(1500);  // the same as in ConsoleLogger
-			}
-			catch (TaskCanceledException) { }
-			catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
+			} catch (TaskCanceledException) { 
+			} catch (AggregateException ex) when (ex.InnerExceptions.Count == 1 && ex.InnerExceptions[0] is TaskCanceledException) { }
 
 			loggers.Clear();
 			fWriter.Close();
@@ -124,8 +123,7 @@ namespace NReco.Logging.File {
 				try {
 					entryQueue.Add(message);
 					return;
-				}
-				catch (InvalidOperationException) { }
+				} catch (InvalidOperationException) { }
 			}
 			// do nothing
 		}
@@ -135,8 +133,7 @@ namespace NReco.Logging.File {
 				try {
 					if (!writeMessageFailed)
 						fWriter.WriteMessage(message, entryQueue.Count == 0);
-				}
-				catch (Exception ex) {
+				} catch (Exception ex) {
 					// something goes wrong. App's code can handle it if 'HandleFileError' is provided
 					var stopLogging = true;
 					if (HandleFileError != null) {
@@ -149,8 +146,7 @@ namespace NReco.Logging.File {
 								fWriter.WriteMessage(message, entryQueue.Count == 0);
 								stopLogging = false;
 							}
-						}
-						catch {
+						} catch {
 							// exception is possible in HandleFileError or if proposed file name cannot be used
 							// let's ignore it in that case -> file logger will stop processing log messages
 						}
@@ -203,17 +199,14 @@ namespace NReco.Logging.File {
 									.OrderByDescending(fInfo => fInfo.Name)
 									.OrderByDescending(fInfo => fInfo.LastWriteTime).First();
 							LogFileName = lastFileInfo.FullName;
-						}
-						else {
+						} else {
 							// no files yet, use default name
 							LogFileName = baseLogFileName;
 						}
-					}
-					else {
+					} else {
 						LogFileName = baseLogFileName;
 					}
-				}
-				else {
+				} else {
 					LogFileName = baseLogFileName;
 				}
 			}
@@ -227,8 +220,7 @@ namespace NReco.Logging.File {
 				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
 				if (append) {
 					LogFileStream.Seek(0, SeekOrigin.End);
-				}
-				else {
+				} else {
 					LogFileStream.SetLength(0); // clear the file
 				}
 				LogFileWriter = new StreamWriter(LogFileStream);
@@ -243,8 +235,7 @@ namespace NReco.Logging.File {
 			void OpenFile(bool append) {
 				try {
 					createLogFileStream(append);
-				}
-				catch (Exception ex) {
+				} catch (Exception ex) {
 					if (FileLogPrv.HandleFileError != null) {
 						var fileErr = new FileError(LogFileName, ex);
 						FileLogPrv.HandleFileError(fileErr);
@@ -267,45 +258,46 @@ namespace NReco.Logging.File {
 					new System.IO.FileInfo(baseLogFileName).Length < FileLogPrv.FileSizeLimitBytes)
 					return baseLogFileName;
 
-				if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.Ascending) {
-					//Unchanged default handling just optimized for performance and code reuse
-					int currentFileIndex = GetIndexFromFile(baseLogFileName, LogFileName);
-					var nextFileIndex = currentFileIndex + 1;
-					if (FileLogPrv.MaxRollingFiles > 0) {
-						nextFileIndex %= FileLogPrv.MaxRollingFiles;
-					}
-					return GetFileFromIndex(baseLogFileName, nextFileIndex);
-				}
-				else if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.AscendingStableBase) {
-					//Move current base file to next rolling file number
-					RollingNumber++;
-					if (FileLogPrv.MaxRollingFiles > 0) {
-						RollingNumber %= FileLogPrv.MaxRollingFiles - 1;
-					}
-					var moveFile = GetFileFromIndex(baseLogFileName, RollingNumber + 1);
-					if (System.IO.File.Exists(moveFile)) {
-						System.IO.File.Delete(moveFile);
-					}
-					System.IO.File.Move(baseLogFileName, moveFile);
-					return baseLogFileName;
-				}
-				else if (FileLogPrv.Options.RollingFilesConvention == FileLoggerOptions.FileRollingConvention.Descending) {
-					//Move all existing files to index +1 except if they are > MaxRollingFiles
-					var logFiles = GetExistingLogFiles(baseLogFileName);
-					if (logFiles.Length > 0) {
-						foreach (var finfo in logFiles.OrderByDescending(fInfo => fInfo.Name)) {
-							var index = GetIndexFromFile(baseLogFileName, finfo.Name);
-							if (FileLogPrv.MaxRollingFiles > 0 && index >= FileLogPrv.MaxRollingFiles - 1) {
-								continue;
+				switch (FileLogPrv.Options.RollingFilesConvention) {
+					case FileLoggerOptions.FileRollingConvention.Ascending:
+							//Unchanged default handling just optimized for performance and code reuse
+							int currentFileIndex = GetIndexFromFile(baseLogFileName, LogFileName);
+							var nextFileIndex = currentFileIndex + 1;
+							if (FileLogPrv.MaxRollingFiles > 0) {
+								nextFileIndex %= FileLogPrv.MaxRollingFiles;
 							}
-							var moveFile = GetFileFromIndex(baseLogFileName, index + 1);
+							return GetFileFromIndex(baseLogFileName, nextFileIndex);
+					case FileLoggerOptions.FileRollingConvention.AscendingStableBase: {
+							//Move current base file to next rolling file number
+							RollingNumber++;
+							if (FileLogPrv.MaxRollingFiles > 0) {
+								RollingNumber %= FileLogPrv.MaxRollingFiles - 1;
+							}
+							var moveFile = GetFileFromIndex(baseLogFileName, RollingNumber + 1);
 							if (System.IO.File.Exists(moveFile)) {
 								System.IO.File.Delete(moveFile);
 							}
-							System.IO.File.Move(finfo.FullName, moveFile);
+							System.IO.File.Move(baseLogFileName, moveFile);
+							return baseLogFileName;
 						}
-					}
-					return baseLogFileName;
+					case FileLoggerOptions.FileRollingConvention.Descending: {
+							//Move all existing files to index +1 except if they are > MaxRollingFiles
+							var logFiles = GetExistingLogFiles(baseLogFileName);
+							if (logFiles.Length > 0) {
+								foreach (var finfo in logFiles.OrderByDescending(fInfo => fInfo.Name)) {
+									var index = GetIndexFromFile(baseLogFileName, finfo.Name);
+									if (FileLogPrv.MaxRollingFiles > 0 && index >= FileLogPrv.MaxRollingFiles - 1) {
+										continue;
+									}
+									var moveFile = GetFileFromIndex(baseLogFileName, index + 1);
+									if (System.IO.File.Exists(moveFile)) {
+										System.IO.File.Delete(moveFile);
+									}
+									System.IO.File.Move(finfo.FullName, moveFile);
+								}
+							}
+							return baseLogFileName;
+						}
 				}
 				throw new NotImplementedException("RollingFilesConvention");
 			}
