@@ -223,6 +223,9 @@ namespace NReco.Logging.Tests
 				createFactoryAndTestLogger();
 				for (int i = 0; i < 1000; i++) {
 					logger.LogInformation("TEST 0123456789");
+					if (i % 50 == 0) {
+						System.Threading.Thread.Sleep(20); // give some time for log writer to handle the queue
+					}	
 				}
 				factory.Dispose();
 				Assert.Equal(5, Directory.GetFiles(tmpFileDir, "test*.log").Length);
