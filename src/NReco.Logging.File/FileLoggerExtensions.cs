@@ -68,6 +68,22 @@ namespace NReco.Logging.File {
 			return builder;
 		}
 
+
+		/// <summary>
+		/// Adds a file logger using the standard Logging configuration.
+		/// </summary>
+		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
+		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, Action<FileLoggerOptions> configure = null) {
+			builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>(
+				(srvPrv) => {
+					IConfigurationSection loggingSection = srvPrv.GetRequiredService<IConfiguration>().GetSection("Logging");
+					return CreateFromConfiguration(loggingSection, configure);
+				}
+			);
+			
+			return builder;
+		}
+
 		/// <summary>
 		/// Adds a file logger.
 		/// </summary>
@@ -125,12 +141,12 @@ namespace NReco.Logging.File {
 			if (String.IsNullOrWhiteSpace(config.Path))
 				return null; // file logger is not configured
 
-			var fileLoggerOptions = new FileLoggerOptions();
-
-			fileLoggerOptions.Append = config.Append;
-			fileLoggerOptions.MinLevel = config.MinLevel;
-			fileLoggerOptions.FileSizeLimitBytes = config.FileSizeLimitBytes;
-			fileLoggerOptions.MaxRollingFiles = config.MaxRollingFiles;
+			var fileLoggerOptions = new FileLoggerOptions {
+				Append = config.Append,
+				MinLevel = config.MinLevel,
+				FileSizeLimitBytes = config.FileSizeLimitBytes,
+				MaxRollingFiles = config.MaxRollingFiles
+			};
 
 			if (configure != null)
 				configure(fileLoggerOptions);
