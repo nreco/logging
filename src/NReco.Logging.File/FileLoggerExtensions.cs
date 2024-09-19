@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -76,7 +77,7 @@ namespace NReco.Logging.File {
 			builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>(
 				(srvPrv) => {
 					IConfigurationSection loggingSection = srvPrv.GetRequiredService<IConfiguration>().GetSection("Logging");
-					return CreateFromConfiguration(loggingSection, configure);
+					return CreateFromConfiguration(loggingSection, configure) ?? NullLoggerProvider.Instance;
 				}
 			);
 
