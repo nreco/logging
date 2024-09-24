@@ -74,12 +74,17 @@ namespace NReco.Logging.File {
 		/// </summary>
 		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
 		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, Action<FileLoggerOptions> configure = null) {
-			builder.Services.AddSingleton<ILoggerProvider>(
-				(srvPrv) => {
-					IConfigurationSection loggingSection = srvPrv.GetRequiredService<IConfiguration>().GetSection("Logging");
-					return CreateFromConfiguration(loggingSection, configure) ?? NullLoggerProvider.Instance;
+			IConfigurationSection loggingSection = builder.Services.BuildServiceProvider().GetService<IConfiguration>()?.GetSection("Logging");
+			if (loggingSection != null) {
+				FileLoggerProvider fileLoggerPrv = CreateFromConfiguration(loggingSection, configure);
+				if (fileLoggerPrv != null) {
+					builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>(
+						(srvPrv) => {
+							return fileLoggerPrv;
+						}
+					);
 				}
-			);
+			}
 
 			return builder;
 		}
