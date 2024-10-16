@@ -13,7 +13,7 @@ NuGet | Tests
 
 ## How to use
 Add *NReco.Logging.File* package reference and initialize a file logging provider in `services.AddLogging` (Startup.cs):
-```
+```csharp
 using NReco.Logging.File;
 
 services.AddLogging(loggingBuilder => {
@@ -21,14 +21,14 @@ services.AddLogging(loggingBuilder => {
 });
 ```
 or
-```
+```csharp
 services.AddLogging(loggingBuilder => {
 	var loggingSection = Configuration.GetSection("Logging");
 	loggingBuilder.AddFile(loggingSection);
 });
 ```
 Example of the configuration section in appsettings.json:
-```
+```jsonc
 "Logging": {
 	"LogLevel": {
 	  "Default": "Debug",
@@ -54,7 +54,7 @@ This feature is activated with `FileLoggerOptions` properties: `FileSizeLimitByt
 
 ## Change log file name on-the-fly
 It is possible to specify a custom log file name formatter with `FileLoggerOptions` property `FormatLogFileName`. Log file name may change in time - for example, to create a new log file per day:
-```
+```csharp
 services.AddLogging(loggingBuilder => {
 	loggingBuilder.AddFile("app_{0:yyyy}-{0:MM}-{0:dd}.log", fileLoggerOpts => {
 		fileLoggerOpts.FormatLogFileName = fName => {
@@ -67,7 +67,7 @@ Note that this handler is called on _every_ log message 'write'; you may cache t
 
 ## Custom log entry formatting
 You can specify `FileLoggerOptions.FormatLogEntry` handler to customize log entry content. For example, it is possible to write log entry as JSON array:
-```
+```csharp
 loggingBuilder.AddFile("logs/app.js", fileLoggerOpts => {
 	fileLoggerOpts.FormatLogEntry = (msg) => {
 		var sb = new System.Text.StringBuilder();
@@ -89,7 +89,7 @@ loggingBuilder.AddFile("logs/app.js", fileLoggerOpts => {
 ## Custom log entry filtering
 You may provide a predicate to perform filter log entries filtering on the logging provider level. This may be useful if you want to have 2 (or more)
 file loggers that separate log entries between log files on some criteria:
-```
+```csharp
 loggingBuilder.AddFile("logs/errors_only.log", fileLoggerOpts => {
 	fileLoggerOpts.FilterLogEntry = (msg) => {
 		return msg.LogLevel == LogLevel.Error;
@@ -100,7 +100,7 @@ loggingBuilder.AddFile("logs/errors_only.log", fileLoggerOpts => {
 ## File errors handling
 Log file is opened immediately when `FileLoggerProvider` is created (= on `AddFile` call) and you may handle initial file opening errors simply by wrapping `AddFile` with a `try .. catch`. 
 However you might want to propose a new log file name to guartee that file logging works even if an original log file is not accessible. To provide your own handling of file errors you may specify `HandleFileError` delegate:
-```
+```csharp
 loggingBuilder.AddFile(loggingSection, fileLoggerOpts => {
 	fileLoggerOpts.HandleFileError = (err) => {
 		err.UseNewLogFileName( Path.GetFileNameWithoutExtension(err.LogFileName)+ "_alt" + Path.GetExtension(err.LogFileName) );
