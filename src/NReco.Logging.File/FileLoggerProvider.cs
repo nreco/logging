@@ -217,7 +217,7 @@ namespace NReco.Logging.File {
 				// so there is no need for a "manual" check first.
 				fileInfo.Directory.Create();
 
-				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
+				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
 				if (append) {
 					LogFileStream.Seek(0, SeekOrigin.End);
 				} else {
