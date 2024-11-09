@@ -3,7 +3,7 @@
  * NReco file logging provider (https://github.com/nreco/logging)
  * Copyright 2017 Vitaliy Fedorchenko
  * Distributed under the MIT license
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,16 +13,11 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.IO;
-using System.Collections.Concurrent;
+using System.Buffers;
 using System.Text;
 
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-
+using NReco.Logging.File.Extensions;
 namespace NReco.Logging.File {
 
 	/// <summary>
@@ -46,21 +41,16 @@ namespace NReco.Logging.File {
 		}
 
 		string GetShortLogLevel(LogLevel logLevel) {
-			switch (logLevel) {
-				case LogLevel.Trace:
-					return "TRCE";
-				case LogLevel.Debug:
-					return "DBUG";
-				case LogLevel.Information:
-					return "INFO";
-				case LogLevel.Warning:
-					return "WARN";
-				case LogLevel.Error:
-					return "FAIL";
-				case LogLevel.Critical:
-					return "CRIT";
-			}
-			return logLevel.ToString().ToUpper();
+			return logLevel switch {
+				LogLevel.Trace => "TRCE",
+				LogLevel.Debug => "DBUG",
+				LogLevel.Information => "INFO",
+				LogLevel.Warning => "WARN",
+				LogLevel.Error => "FAIL",
+				LogLevel.Critical => "CRIT",
+				LogLevel.None => "NONE",
+				_ => logLevel.ToString().ToUpper(),
+			};
 		}
 
 		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state,
@@ -79,34 +69,71 @@ namespace NReco.Logging.File {
 				if (!LoggerPrv.Options.FilterLogEntry(new LogMessage(logName, logLevel, eventId, message, exception)))
 					return;
 
-			if (LoggerPrv.FormatLogEntry!=null) {
+			if (LoggerPrv.FormatLogEntry != null) {
 				LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(
 					new LogMessage(logName, logLevel, eventId, message, exception)));
-			} else {
-				// default formatting logic
-				var logBuilder = new StringBuilder();
-				if (!string.IsNullOrEmpty(message)) {
-					DateTime timeStamp = LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now;
-					logBuilder.Append(timeStamp.ToString("o"));
-					logBuilder.Append('\t');
-					logBuilder.Append(GetShortLogLevel(logLevel));
-					logBuilder.Append("\t[");
-					logBuilder.Append(logName);
-					logBuilder.Append("]");
-					logBuilder.Append("\t[");
-					logBuilder.Append(eventId);
-					logBuilder.Append("]\t");
-					logBuilder.Append(message);
-				}
+			}
+			else {
+				const int MaxStackAllocatedBufferLength = 256;
+				var logMessageLength = CalculateLogMessageLength(eventId, message);
+				char[] charBuffer = null;
+				try {
+					Span<char> buffer = logMessageLength <= MaxStackAllocatedBufferLength
+						? stackalloc char[MaxStackAllocatedBufferLength]
+						: (charBuffer = ArrayPool<char>.Shared.Rent(logMessageLength));
 
-				if (exception != null) {
-					// exception message
-					logBuilder.AppendLine(exception.ToString());
+					FormatLogEntryDefault(buffer, message, logLevel, eventId, exception);
 				}
-				LoggerPrv.WriteEntry(logBuilder.ToString());
+				finally {
+					if (charBuffer is not null) {
+						ArrayPool<char>.Shared.Return(charBuffer);
+					}
+				}
 			}
 		}
+
+		private void FormatLogEntryDefault(Span<char> buffer, string message, LogLevel logLevel,
+			EventId eventId, Exception exception) {
+			// default formatting logic
+			using var logBuilder = new ValueStringBuilder(buffer);
+			if (!string.IsNullOrEmpty(message)) {
+				DateTime timeStamp = LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now;
+				timeStamp.TryFormatO(logBuilder.RemainingRawChars, out var charsWritten);
+				logBuilder.AppendSpan(charsWritten);
+				logBuilder.Append('\t');
+				logBuilder.Append(GetShortLogLevel(logLevel));
+				logBuilder.Append("\t[");
+				logBuilder.Append(logName);
+				logBuilder.Append("]\t[");
+				if (eventId.Name is not null) {
+					logBuilder.Append(eventId.Name);
+				}
+				else {
+					eventId.Id.TryFormat(logBuilder.RemainingRawChars, out charsWritten);
+					logBuilder.AppendSpan(charsWritten);
+				}
+				logBuilder.Append("]\t");
+				logBuilder.Append(message);
+			}
+
+			if (exception != null) {
+				// exception message
+				logBuilder.Append(exception.ToString());
+				logBuilder.Append(Environment.NewLine);
+			}
+			LoggerPrv.WriteEntry(logBuilder.ToString());
+		}
+
+		private int CalculateLogMessageLength(EventId eventId, string message) {
+			return 33 /* timeStamp.TryFormatO */
+				+ 1 /* '\t' */
+				+ 4 /* GetShortLogLevel */
+				+ 2 /* "\t[" */
+				+ (logName?.Length ?? 0)
+				+ 3 /* "]\t[" */
+				+ (eventId.Name?.Length ?? eventId.Id.GetFormattedLength())
+				+ 2 /* "]\t" */
+				+ (message?.Length ?? 0);
+		}
 	}
-
-
 }

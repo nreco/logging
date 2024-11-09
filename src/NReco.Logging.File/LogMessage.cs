@@ -3,7 +3,7 @@
  * NReco file logging provider (https://github.com/nreco/logging)
  * Copyright 2017 Vitaliy Fedorchenko
  * Distributed under the MIT license
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,13 +13,11 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Text;
 using Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File {
 
-	public struct LogMessage {
+	public readonly struct LogMessage {
 		public readonly string LogName;
 		public readonly string Message;
 		public readonly LogLevel LogLevel;
