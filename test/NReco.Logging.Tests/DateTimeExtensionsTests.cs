@@ -21,9 +21,7 @@ namespace NReco.Logging.Tests {
 
 		[Fact]
 		public void GetFormattedLengthOfDateTimeKindUnspecified() {
-			var testValue = new DateTime(2024, 01, 01, 01, 01, 01, DateTimeKind.Unspecified);
-
-			var result = testValue.GetFormattedLength();
+			var result = new DateTime(2024, 01, 01, 01, 01, 01, DateTimeKind.Unspecified).GetFormattedLength();
 
 			Assert.Equal(27, result);
 		}
@@ -38,7 +36,7 @@ namespace NReco.Logging.Tests {
 		[Fact]
 		public void TryFormatLocal() {
 			var testValue = DateTime.Now;
-			var expected = testValue.ToString("O");
+			var expected = $"{testValue:O}";
 
 			Span<char> span = stackalloc char[33];
 			var result = testValue.TryFormatO(span, out var charsWritten);
@@ -51,7 +49,7 @@ namespace NReco.Logging.Tests {
 		[Fact]
 		public void TryFormatUtc() {
 			var testValue = DateTime.UtcNow;
-			var expected = testValue.ToString("O") + "\0\0\0\0\0";
+			var expected = $"{testValue:O}\0\0\0\0\0";
 
 			Span<char> span = stackalloc char[33];
 			var result = testValue.TryFormatO(span, out var charsWritten);
@@ -64,7 +62,7 @@ namespace NReco.Logging.Tests {
 		[Fact]
 		public void TryFormatUnspecified() {
 			var testValue = new DateTime(2024, 1, 1, 1, 1, 1, DateTimeKind.Unspecified);
-			var expected = testValue.ToString("O") + "\0\0\0\0\0\0";
+			var expected = $"{testValue:O}\0\0\0\0\0\0";
 
 			Span<char> span = stackalloc char[33];
 			var result = testValue.TryFormatO(span, out var charsWritten);
@@ -77,7 +75,7 @@ namespace NReco.Logging.Tests {
 		[Fact]
 		public void TryFormatDefault() {
 			var testValue = default(DateTime);
-			var expected = testValue.ToString("O") + "\0\0\0\0\0\0";
+			var expected = $"{testValue:O}\0\0\0\0\0\0";
 
 			Span<char> span = stackalloc char[33];
 			var result = testValue.TryFormatO(span, out var charsWritten);
@@ -90,7 +88,7 @@ namespace NReco.Logging.Tests {
 		[Fact]
 		public void TryFormatMaxValue() {
 			var testValue = DateTime.MaxValue;
-			var expected = testValue.ToString("O") + "\0\0\0\0\0\0";
+			var expected = $"{testValue:O}\0\0\0\0\0\0";
 
 			Span<char> span = stackalloc char[33];
 			var result = testValue.TryFormatO(span, out var charsWritten);
