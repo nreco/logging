@@ -8,6 +8,7 @@ namespace NReco.Logging.File.Extensions {
 			return value == 0 ? 1 : (int)Math.Floor(Math.Log10(Math.Abs((double)value))) + (value > 0 ? 1 : 2);
 		}
 
+#if NETSTANDARD2_0
 		public static bool TryFormat(this int value, Span<char> destination, out int charsWritten) {
 			charsWritten = value.GetFormattedLength();
 			if (destination.Length < charsWritten) {
@@ -35,5 +36,6 @@ namespace NReco.Logging.File.Extensions {
 
 			destination[0] = (char)('0' + value);
 		}
+#endif
 	}
 }

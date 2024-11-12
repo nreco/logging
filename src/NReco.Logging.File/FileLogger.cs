@@ -75,14 +75,15 @@ namespace NReco.Logging.File {
 			}
 			else {
 				const int MaxStackAllocatedBufferLength = 256;
-				var logMessageLength = CalculateLogMessageLength(eventId, message);
+				DateTime timeStamp = LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now;
+				var logMessageLength = CalculateLogMessageLength(timeStamp, eventId, message);
 				char[] charBuffer = null;
 				try {
 					Span<char> buffer = logMessageLength <= MaxStackAllocatedBufferLength
 						? stackalloc char[MaxStackAllocatedBufferLength]
 						: (charBuffer = ArrayPool<char>.Shared.Rent(logMessageLength));
 
-					FormatLogEntryDefault(buffer, message, logLevel, eventId, exception);
+					FormatLogEntryDefault(buffer, timeStamp, message, logLevel, eventId, exception);
 				}
 				finally {
 					if (charBuffer is not null) {
@@ -92,12 +93,11 @@ namespace NReco.Logging.File {
 			}
 		}
 
-		private void FormatLogEntryDefault(Span<char> buffer, string message, LogLevel logLevel,
-			EventId eventId, Exception exception) {
+		private void FormatLogEntryDefault(Span<char> buffer, DateTime timeStamp, string message,
+			LogLevel logLevel, EventId eventId, Exception exception) {
 			// default formatting logic
 			using var logBuilder = new ValueStringBuilder(buffer);
 			if (!string.IsNullOrEmpty(message)) {
-				DateTime timeStamp = LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now;
 				timeStamp.TryFormatO(logBuilder.RemainingRawChars, out var charsWritten);
 				logBuilder.AppendSpan(charsWritten);
 				logBuilder.Append('\t');
@@ -124,8 +124,8 @@ namespace NReco.Logging.File {
 			LoggerPrv.WriteEntry(logBuilder.ToString());
 		}
 
-		private int CalculateLogMessageLength(EventId eventId, string message) {
-			return 33 /* timeStamp.TryFormatO */
+		private int CalculateLogMessageLength(DateTime timeStamp, EventId eventId, string message) {
+			return timeStamp.GetFormattedLength()
 				+ 1 /* '\t' */
 				+ 4 /* GetShortLogLevel */
 				+ 2 /* "\t[" */

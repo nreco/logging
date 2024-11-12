@@ -4,18 +4,19 @@
 
 namespace NReco.Logging.File.Extensions {
 	public static class DateTimeExtensions {
-		public static bool TryFormatO(this DateTime dateTime, Span<char> destination, out int charsWritten) {
+		public static int GetFormattedLength(this DateTime dateTime) {
 			const int BaseCharCountInFormatO = 27;
 
-			int charsRequired = BaseCharCountInFormatO;
-			var kind = dateTime.Kind;
-			var offset = TimeZoneInfo.Local.GetUtcOffset(dateTime);
-			if (kind == DateTimeKind.Local) {
-				charsRequired += 6;
-			}
-			else if (kind == DateTimeKind.Utc) {
-				charsRequired++;
-			}
+			return BaseCharCountInFormatO + dateTime.Kind switch {
+				DateTimeKind.Local => 6,
+				DateTimeKind.Utc => 1,
+				_ => 0
+			};
+		}
+
+#if NETSTANDARD2_0
+		public static bool TryFormatO(this DateTime dateTime, Span<char> destination, out int charsWritten) {
+			var charsRequired = dateTime.GetFormattedLength();
 
 			if (destination.Length < charsRequired) {
 				charsWritten = 0;
@@ -46,7 +47,9 @@ namespace NReco.Logging.File.Extensions {
 			destination[19] = '.';
 			tick.WriteDigits(destination.Slice(20), 7);
 
+			var kind = dateTime.Kind;
 			if (kind == DateTimeKind.Local) {
+				var offset = TimeZoneInfo.Local.GetUtcOffset(dateTime);
 				var offsetTotalMinutes = (int)(offset.Ticks / TimeSpan.TicksPerMinute);
 
 				var sign = '+';
@@ -68,5 +71,10 @@ namespace NReco.Logging.File.Extensions {
 
 			return true;
 		}
+#else
+		public static bool TryFormatO(this DateTime dateTime, Span<char> destination, out int charsWritten) {
+			return dateTime.TryFormat(destination, out charsWritten, format: "O");
+		}
+#endif
 	}
 }
