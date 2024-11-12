@@ -73,7 +73,7 @@ namespace NReco.Logging.Tests
 				factory.Dispose();
 
 				Assert.Equal(3, System.IO.File.ReadAllLines(tmpFile).Length);
-				
+
 			} finally {
 				System.IO.File.Delete(tmpFile);
 			}
@@ -225,7 +225,7 @@ namespace NReco.Logging.Tests
 					logger.LogInformation("TEST 0123456789");
 					if (i % 50 == 0) {
 						System.Threading.Thread.Sleep(20); // give some time for log writer to handle the queue
-					}	
+					}
 				}
 				factory.Dispose();
 				Assert.Equal(5, Directory.GetFiles(tmpFileDir, "test*.log").Length);
@@ -293,14 +293,14 @@ namespace NReco.Logging.Tests
 		[Fact]
 		public void CreateDirectoryAutomatically()
 		{
-			
+
 			var tmpFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString(), "testfile.log");
 			try
 			{
 				var factory = new LoggerFactory();
-				
+
 				factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions()));
-				
+
 				var logger = factory.CreateLogger("TEST");
 				logger.LogInformation("Line1");
 				factory.Dispose();
@@ -363,7 +363,7 @@ namespace NReco.Logging.Tests
 					if (i > 0 && i % 5 == 0)
 						Thread.Sleep(1000); // log writer works in another thread. Let him to process log messages in queue.
 					logger.LogInformation("Line" + (i + 1).ToString());
-					
+
 				}
 				factory.Dispose();
 
@@ -417,19 +417,19 @@ namespace NReco.Logging.Tests
 				});
 
 				var errorHandled = false;
-				var factory2 = new LoggerFactory();
-				toDispose.Add(factory2);
+				var factory3 = new LoggerFactory();
+				toDispose.Add(factory3);
 				var altLogFileName = Path.Combine(tmpDir, "testfile_after_err.log");
-				factory2.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {
+				factory3.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {
 					HandleFileError = (err) => {
 						errorHandled = true;
 						err.UseNewLogFileName(altLogFileName);
 					}
 				}));
-				var logger2 = factory2.CreateLogger("TEST");
-				writeSomethingToLogger(logger2, 15);
+				var logger3 = factory3.CreateLogger("TEST");
+				writeSomethingToLogger(logger3, 15);
 				Assert.True(errorHandled);
-				factory2.Dispose();
+				factory3.Dispose();
 				// ensure that alt file name was used
 				var altLogFileInfo = new FileInfo(altLogFileName);
 				Assert.True(altLogFileInfo.Exists);
@@ -471,7 +471,7 @@ namespace NReco.Logging.Tests
 			var logFileWr = fileLogPrv.GetType()
 					.GetField("fWriter", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
 					.GetValue(fileLogPrv);
-			// close file handler, this will cause an exception inside FileLoggerProvider.ProcessQueue 
+			// close file handler, this will cause an exception inside FileLoggerProvider.ProcessQueue
 			var logFileStream = (Stream)logFileWr.GetType()
 				.GetField("LogFileStream", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
 				.GetValue(logFileWr);
@@ -496,7 +496,7 @@ namespace NReco.Logging.Tests
 			var logFileName = Path.Combine(tmpDir, "testfile.log");
 			var factory = new LoggerFactory();
 			try {
-				factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() { 
+				factory.AddProvider(new FileLoggerProvider(logFileName, new FileLoggerOptions() {
 					FilterLogEntry = (logEntry) => {
 						return logEntry.LogName == "TEST";
 					}
@@ -515,7 +515,7 @@ namespace NReco.Logging.Tests
 			} finally {
 				CleanupTempDir(tmpDir, new[] { factory });
 			}
-		} 		
+		}
 
 	}
 }
