@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <TargetFrameworks>net8.0;net481</TargetFrameworks>
     <AssemblyName>NReco.Logging.Tests</AssemblyName>
 	<IsPackable>false</IsPackable>
   </PropertyGroup>
