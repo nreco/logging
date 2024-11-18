@@ -1,5 +1,5 @@
 # NReco.Logging.File
-Simple and efficient file logger provider for .NET Core (any version) / NET6 / NET8 without additional dependencies.
+Simple and efficient file logger provider for NET6 / NET8 / NET9 without any additional dependencies.
 
 NuGet | Tests
 --- | --- 
@@ -10,6 +10,7 @@ NuGet | Tests
 * supports a 'rolling file' behaviour and can control total log size
 * it is possible to change log file name on-the-fly
 * suitable for intensive concurrent usage: has internal message queue to avoid threads blocking
+* optimized low-allocation default log messages formatting suitable for intensive usage
 
 ## How to use
 Add *NReco.Logging.File* package reference and initialize a file logging provider in `services.AddLogging` (Startup.cs):
@@ -113,6 +114,6 @@ A new file name is applied in the same way as when it comes from the initial `Fi
 
 
 ## License
-Copyright 2017-2023 Vitaliy Fedorchenko and contributors
+Copyright 2017-2024 Vitaliy Fedorchenko and contributors
 
 Distributed under the MIT license

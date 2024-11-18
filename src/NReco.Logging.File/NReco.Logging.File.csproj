@@ -16,8 +16,8 @@ More details and examples: https://github.com/nreco/logging
     <Title>NET8/ NET6 / .NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2024 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.2.1</VersionPrefix>
-    <Authors>Vitalii Fedorchenko</Authors>
+    <VersionPrefix>1.2.2</VersionPrefix>
+    <Authors>Vitalii Fedorchenko and contributors</Authors>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
     <LangVersion>12.0</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -28,6 +28,10 @@ More details and examples: https://github.com/nreco/logging
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+
+Version 1.2.2 changes:
+ - Reduce heap allocation of the default log message formatting logic in the FileLogger.Log #74
+ - Explicitly specifying FileShare.Read option when opening the file stream (#72)
 
 Version 1.2.1 changes:
  - Added different rolling name conventions #66 (unix-style is supported with 'Descending' convention)
