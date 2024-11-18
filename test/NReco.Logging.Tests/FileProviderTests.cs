@@ -148,8 +148,8 @@ namespace NReco.Logging.Tests
 
 				for (int i = 0; i < 400; i++) {
 					logger.LogInformation("TEST 0123456789");
-					if (i % 20 == 0) {
-						System.Threading.Thread.Sleep(20); // give some time for log writer to handle the queue
+					if (i % 50 == 0) {
+						System.Threading.Thread.Sleep(50); // give some time for log writer to handle the queue
 					}
 				}
 				factory.Dispose();
@@ -203,8 +203,8 @@ namespace NReco.Logging.Tests
 
 				for (int i = 0; i < 400; i++) {
 					logger.LogInformation("TEST 0123456789");
-					if (i % 20 == 0) {
-						System.Threading.Thread.Sleep(20); // give some time for log writer to handle the queue
+					if (i % 50 == 0) {
+						System.Threading.Thread.Sleep(50); // give some time for log writer to handle the queue
 					}
 				}
 				factory.Dispose();
@@ -223,8 +223,8 @@ namespace NReco.Logging.Tests
 				createFactoryAndTestLogger();
 				for (int i = 0; i < 1000; i++) {
 					logger.LogInformation("TEST 0123456789");
-					if (i % 20 == 0) {
-						System.Threading.Thread.Sleep(20); // give some time for log writer to handle the queue
+					if (i % 50 == 0) {
+						System.Threading.Thread.Sleep(50); // give some time for log writer to handle the queue
 					}
 				}
 				factory.Dispose();
