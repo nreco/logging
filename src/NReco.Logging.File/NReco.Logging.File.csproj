@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <Description>Lightweight file logging provider implementation for NET6 / NET8+ / .NET Core without dependencies on logging frameworks.
-	
+
 How to use:
 
 using NReco.Logging.File;
 
-services.AddLogging(loggingBuilder => {
+services.AddLogging(loggingBuilder =&gt; {
 	loggingBuilder.AddFile("app.log", append:true);
 });
 
@@ -19,6 +19,7 @@ More details and examples: https://github.com/nreco/logging
     <VersionPrefix>1.2.1</VersionPrefix>
     <Authors>Vitalii Fedorchenko</Authors>
     <TargetFrameworks>netstandard2.0;net6.0;net8.0</TargetFrameworks>
+    <LangVersion>12.0</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>NReco.Logging.File</AssemblyName>
     <PackageId>NReco.Logging.File</PackageId>
@@ -27,10 +28,10 @@ More details and examples: https://github.com/nreco/logging
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
-	
+
 Version 1.2.1 changes:
  - Added different rolling name conventions #66 (unix-style is supported with 'Descending' convention)
-	
+
 Version 1.2.0 changes:
  - NReco's FileLoggerExtensions should NOT be in the Microsoft.Extensions.Logging namespace #61
  - Added net6 and net8 builds to reference appropriate Microsoft.Logging.Extensions versions
@@ -65,7 +66,7 @@ Version 1.1.0 changes:
 Version 1.0.5 changes:
  - log file folder is created automatically if not exists
  - environment variables are expanded in the file path
-	
+
 Version 1.0.4 changes:
  - added "File" provider alias for MVC Core 2 filtering rules
  - added 'rolling file' behaviour controlled with new FileLoggerProvider properties (FileSizeLimitBytes and MaxRollingFiles)</PackageReleaseNotes>
@@ -81,11 +82,11 @@ Version 1.0.4 changes:
     <SignAssembly>false</SignAssembly>
     <AssemblyOriginatorKeyFile>NReco.Logging.File.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="3.*" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="3.*" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="3.*" /> 
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.*" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
@@ -97,7 +98,7 @@ Version 1.0.4 changes:
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.*" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.*" />  
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.*" />
   </ItemGroup>
-    
+
 </Project>
