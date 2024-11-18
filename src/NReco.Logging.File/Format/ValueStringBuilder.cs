@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System;
 using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -8,7 +9,7 @@ using System.Runtime.InteropServices;
 
 #nullable enable
 
-namespace System.Text {
+namespace NReco.Logging.File.Format {
 	internal ref partial struct ValueStringBuilder {
 		private char[]? _arrayToReturnToPool;
 		private Span<char> _chars;

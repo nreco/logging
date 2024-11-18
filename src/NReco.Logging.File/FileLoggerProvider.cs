@@ -345,7 +345,7 @@ namespace NReco.Logging.File {
 			/// Returns the index of a file or 0 if none found
 			/// </summary>
 			private int GetIndexFromFile(string baseLogFileName, string filename) {
-#if NETSTANDARD
+#if NETSTANDARD2_0
 				var baseFileNameOnly = Path.GetFileNameWithoutExtension(baseLogFileName);
 				var currentFileNameOnly = Path.GetFileNameWithoutExtension(filename);
 
@@ -367,6 +367,7 @@ namespace NReco.Logging.File {
 				var nextFileName = Path.GetFileNameWithoutExtension(baseLogFileName) + (index > 0 ? index.ToString() : "") + Path.GetExtension(baseLogFileName);
 				return Path.Combine(Path.GetDirectoryName(baseLogFileName), nextFileName);
 #else
+				// Contact for ReadOnlySpan<char> is not available in both netstandard2.0 and netstandard2.1
 				var nextFileName = string.Concat(Path.GetFileNameWithoutExtension(baseLogFileName.AsSpan()), index > 0 ? index.ToString() : "", Path.GetExtension(baseLogFileName.AsSpan()));
 				return string.Concat(Path.Join(Path.GetDirectoryName(baseLogFileName.AsSpan()), nextFileName.AsSpan()));
 #endif

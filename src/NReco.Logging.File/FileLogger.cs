@@ -15,9 +15,8 @@
 using System;
 using System.Buffers;
 using System.Text;
-
 using Microsoft.Extensions.Logging;
-using NReco.Logging.File.Extensions;
+
 namespace NReco.Logging.File {
 
 	/// <summary>
@@ -38,19 +37,6 @@ namespace NReco.Logging.File {
 
 		public bool IsEnabled(LogLevel logLevel) {
 			return logLevel>=LoggerPrv.MinLevel;
-		}
-
-		string GetShortLogLevel(LogLevel logLevel) {
-			return logLevel switch {
-				LogLevel.Trace => "TRCE",
-				LogLevel.Debug => "DBUG",
-				LogLevel.Information => "INFO",
-				LogLevel.Warning => "WARN",
-				LogLevel.Error => "FAIL",
-				LogLevel.Critical => "CRIT",
-				LogLevel.None => "NONE",
-				_ => logLevel.ToString().ToUpper(),
-			};
 		}
 
 		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state,
@@ -74,66 +60,16 @@ namespace NReco.Logging.File {
 					new LogMessage(logName, logLevel, eventId, message, exception)));
 			}
 			else {
-				const int MaxStackAllocatedBufferLength = 256;
-				DateTime timeStamp = LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now;
-				var logMessageLength = CalculateLogMessageLength(timeStamp, eventId, message);
-				char[] charBuffer = null;
-				try {
-					Span<char> buffer = logMessageLength <= MaxStackAllocatedBufferLength
-						? stackalloc char[MaxStackAllocatedBufferLength]
-						: (charBuffer = ArrayPool<char>.Shared.Rent(logMessageLength));
-
-					FormatLogEntryDefault(buffer, timeStamp, message, logLevel, eventId, exception);
-				}
-				finally {
-					if (charBuffer is not null) {
-						ArrayPool<char>.Shared.Return(charBuffer);
-					}
-				}
+				LoggerPrv.WriteEntry( 
+					Format.StringLogEntryFormatter.Instance.LowAllocLogEntryFormat(
+						logName,
+						LoggerPrv.UseUtcTimestamp ? DateTime.UtcNow : DateTime.Now,
+						logLevel,
+						eventId,
+						message,
+						exception));
 			}
 		}
 
-		private void FormatLogEntryDefault(Span<char> buffer, DateTime timeStamp, string message,
-			LogLevel logLevel, EventId eventId, Exception exception) {
-			// default formatting logic
-			using var logBuilder = new ValueStringBuilder(buffer);
-			if (!string.IsNullOrEmpty(message)) {
-				timeStamp.TryFormatO(logBuilder.RemainingRawChars, out var charsWritten);
-				logBuilder.AppendSpan(charsWritten);
-				logBuilder.Append('\t');
-				logBuilder.Append(GetShortLogLevel(logLevel));
-				logBuilder.Append("\t[");
-				logBuilder.Append(logName);
-				logBuilder.Append("]\t[");
-				if (eventId.Name is not null) {
-					logBuilder.Append(eventId.Name);
-				}
-				else {
-					eventId.Id.TryFormat(logBuilder.RemainingRawChars, out charsWritten);
-					logBuilder.AppendSpan(charsWritten);
-				}
-				logBuilder.Append("]\t");
-				logBuilder.Append(message);
-			}
-
-			if (exception != null) {
-				// exception message
-				logBuilder.Append(exception.ToString());
-				logBuilder.Append(Environment.NewLine);
-			}
-			LoggerPrv.WriteEntry(logBuilder.ToString());
-		}
-
-		private int CalculateLogMessageLength(DateTime timeStamp, EventId eventId, string message) {
-			return timeStamp.GetFormattedLength()
-				+ 1 /* '\t' */
-				+ 4 /* GetShortLogLevel */
-				+ 2 /* "\t[" */
-				+ (logName?.Length ?? 0)
-				+ 3 /* "]\t[" */
-				+ (eventId.Name?.Length ?? eventId.Id.GetFormattedLength())
-				+ 2 /* "]\t" */
-				+ (message?.Length ?? 0);
-		}
 	}
 }
