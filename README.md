@@ -100,7 +100,7 @@ loggingBuilder.AddFile("logs/errors_only.log", fileLoggerOpts => {
 
 ## File errors handling
 Log file is opened immediately when `FileLoggerProvider` is created (= on `AddFile` call) and you may handle initial file opening errors simply by wrapping `AddFile` with a `try .. catch`. 
-However you might want to propose a new log file name to guartee that file logging works even if an original log file is not accessible. To provide your own handling of file errors you may specify `HandleFileError` delegate:
+However you might want to propose a new log file name to guarantee that file logging works even if an original log file is not accessible. To provide your own handling of file errors you may specify `HandleFileError` delegate:
 ```csharp
 loggingBuilder.AddFile(loggingSection, fileLoggerOpts => {
 	fileLoggerOpts.HandleFileError = (err) => {
