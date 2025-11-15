@@ -13,14 +13,9 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.IO;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-
-using NReco.Logging.File;
+using Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File {
 

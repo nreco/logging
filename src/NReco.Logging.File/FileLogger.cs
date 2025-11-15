@@ -13,8 +13,6 @@
 #endregion
 
 using System;
-using System.Buffers;
-using System.Text;
 using Microsoft.Extensions.Logging;
 
 namespace NReco.Logging.File {

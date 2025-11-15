@@ -1,9 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
-using System;
+﻿using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 [assembly: InternalsVisibleTo("NReco.Logging.Tests")]
 
