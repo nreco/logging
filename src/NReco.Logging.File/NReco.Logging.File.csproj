@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>Lightweight file logging provider implementation for NET6 / NET8+ / .NET Core without dependencies on logging frameworks.
+    <Description>Lightweight file logging provider implementation for NET6 / NET8 / NET10+ .NET Core without dependencies on logging frameworks.
 
 How to use:
 
@@ -13,12 +13,12 @@ services.AddLogging(loggingBuilder =&gt; {
 
 More details and examples: https://github.com/nreco/logging
 </Description>
-    <Title>NET8/ NET6 / .NET Core file logger provider.</Title>
+    <Title>NET10 / NET8 / NET6 / .NET Core file logger provider.</Title>
 	<Copyright>Copyright (c) 2017-2024 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
     <VersionPrefix>1.2.2</VersionPrefix>
     <Authors>Vitalii Fedorchenko and contributors</Authors>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net8.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net8.0;net10.0</TargetFrameworks>
     <LangVersion>12.0</LangVersion>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>NReco.Logging.File</AssemblyName>
@@ -103,6 +103,12 @@ Version 1.0.4 changes:
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="8.0.*" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="10.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.*" />
   </ItemGroup>
 
 </Project>
