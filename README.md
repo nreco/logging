@@ -114,6 +114,6 @@ A new file name is applied in the same way as when it comes from the initial `Fi
 
 
 ## License
-Copyright 2017-2024 Vitaliy Fedorchenko and contributors
+Copyright 2017-2025 Vitaliy Fedorchenko and contributors
 
 Distributed under the MIT license
