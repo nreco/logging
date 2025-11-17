@@ -57,11 +57,11 @@ namespace NReco.Logging.File {
 		/// </summary>
 		/// <remarks>File logger is not added if "File" section is not present or it doesn't contain "Path" property.</remarks>
 		public static ILoggingBuilder AddFile(this ILoggingBuilder builder, IConfiguration configuration, Action<FileLoggerOptions> configure = null) {
-			var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
-			if (fileLoggerPrv != null) {
+			var fileLoggerOptions = GetOptionsFromConfiguration(configuration, configure);
+			if (fileLoggerOptions != null) {
 				builder.Services.AddSingleton<ILoggerProvider, FileLoggerProvider>(
 					(srvPrv) => {
-						return fileLoggerPrv;
+						return new FileLoggerProvider(fileLoggerOptions.Item1, fileLoggerOptions.Item2);
 					}
 				);
 			}
@@ -100,14 +100,14 @@ namespace NReco.Logging.File {
 		/// <param name="configure">a handler that initializes <see cref="FileLoggerOptions"/>.</param>
 		public static ILoggerFactory AddFile(this ILoggerFactory factory, IConfiguration configuration, Action<FileLoggerOptions> configure = null) {
 			var prvFactory = factory;
-			var fileLoggerPrv = CreateFromConfiguration(configuration, configure);
-			if (fileLoggerPrv == null)
+			var fileLoggerOptions = GetOptionsFromConfiguration(configuration, configure);
+			if (fileLoggerOptions == null)
 				return factory;
-			prvFactory.AddProvider(fileLoggerPrv);
+			prvFactory.AddProvider(new FileLoggerProvider(fileLoggerOptions.Item1, fileLoggerOptions.Item2));
 			return factory;
 		}
 
-		private static FileLoggerProvider CreateFromConfiguration(IConfiguration configuration, Action<FileLoggerOptions> configure) {
+		private static Tuple<string, FileLoggerOptions> GetOptionsFromConfiguration(IConfiguration configuration, Action<FileLoggerOptions> configure) {
 			var config = new FileLoggerConfig();
 			var fileSection = configuration.GetSection("File");
 			if (!fileSection.Exists()) {
@@ -135,7 +135,7 @@ namespace NReco.Logging.File {
 			if (configure != null)
 				configure(fileLoggerOptions);
 
-			return new FileLoggerProvider(config.Path, fileLoggerOptions);
+			return new(config.Path, fileLoggerOptions);
 		}
 
 	}
