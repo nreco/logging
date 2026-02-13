@@ -26,7 +26,7 @@ More details and examples: https://github.com/nreco/logging
     <PackageTags>log;file;logging;asp.net;file-logger;logging-provider;netstandard;netcore</PackageTags>
     <PackageIconUrl>https://www.nrecosite.com/img/nreco-logo-200.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
 
 Version 1.3.1 changes:
