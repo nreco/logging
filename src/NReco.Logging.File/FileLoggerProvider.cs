@@ -39,6 +39,7 @@ namespace NReco.Logging.File {
 
 		private bool Append => Options.Append;
 		private long FileSizeLimitBytes => Options.FileSizeLimitBytes;
+		private TimeSpan FileTimeSpanLimit => Options.FileTimeSpanLimit;
 		private int MaxRollingFiles => Options.MaxRollingFiles;
 
 		public LogLevel MinLevel {
@@ -249,9 +250,12 @@ namespace NReco.Logging.File {
 			string GetNextFileLogName() {
 				var baseLogFileName = GetBaseLogFileName();
 				// if file does not exist or file size limit is not reached - do not add rolling file index
-				if (!System.IO.File.Exists(baseLogFileName) ||
-					FileLogPrv.FileSizeLimitBytes <= 0 ||
-					new System.IO.FileInfo(baseLogFileName).Length < FileLogPrv.FileSizeLimitBytes)
+				if (
+					!System.IO.File.Exists(baseLogFileName) 
+					|| (FileLogPrv.FileSizeLimitBytes <= 0 && FileLogPrv.FileTimeSpanLimit == TimeSpan.Zero) 
+					|| new FileInfo(baseLogFileName).Length < FileLogPrv.FileSizeLimitBytes
+					|| (DateTime.Now - System.IO.File.GetCreationTime(baseLogFileName)) <= FileLogPrv.FileTimeSpanLimit
+					)
 					return baseLogFileName;
 
 				switch (FileLogPrv.Options.RollingFilesConvention) {
@@ -303,15 +307,18 @@ namespace NReco.Logging.File {
 
 			void CheckForNewLogFile() {
 				bool openNewFile = false;
-				if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged())
+				if (isMaxFileSizeThresholdReached() || isBaseFileNameChanged() || isMaxFileLifetimeThresholdReached())
 					openNewFile = true;
-
 				if (openNewFile) {
 					Close();
 					LogFileName = GetNextFileLogName();
 					OpenFile(false);
 				}
 
+				bool isMaxFileLifetimeThresholdReached() {
+					return FileLogPrv.FileTimeSpanLimit > TimeSpan.Zero && 
+						(DateTime.Now - System.IO.File.GetCreationTime(LogFileName)) > FileLogPrv.FileTimeSpanLimit;
+				}
 				bool isMaxFileSizeThresholdReached() {
 					return FileLogPrv.FileSizeLimitBytes > 0 && LogFileStream.Length > FileLogPrv.FileSizeLimitBytes;
 				}

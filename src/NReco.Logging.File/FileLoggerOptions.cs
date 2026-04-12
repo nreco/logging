@@ -35,6 +35,12 @@ namespace NReco.Logging.File {
 		public long FileSizeLimitBytes { get; set; } = 0;
 
 		/// <summary>
+		/// Determines max timespan of the one log file.
+		/// </summary>
+		/// See <see cref="FileSizeLimitBytes"/> on how this affects file names.
+		public TimeSpan FileTimeSpanLimit { get; set; } = TimeSpan.Zero;
+
+		/// <summary>
 		/// Determines max number of log files if <see cref="FileSizeLimitBytes"/> is specified.
 		/// </summary>
 		/// <remarks>If MaxRollingFiles is specified file logger will re-write previously created log files.

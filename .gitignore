@@ -8,3 +8,6 @@ obj/
 .vs
 *.nuget.targets
 *.lock.json
+.devcontainer.json
+.clad.json
+.ironClad.dockerfile

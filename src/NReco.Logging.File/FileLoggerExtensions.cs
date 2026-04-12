@@ -126,6 +126,7 @@ namespace NReco.Logging.File {
 			fileLoggerOptions.MinLevel = config.MinLevel;
 			fileLoggerOptions.FileSizeLimitBytes = config.FileSizeLimitBytes;
 			fileLoggerOptions.MaxRollingFiles = config.MaxRollingFiles;
+			fileLoggerOptions.FileTimeSpanLimit = config.FileTimeSpanLimit;
 
 			if (configure != null)
 				configure(fileLoggerOptions);

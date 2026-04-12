@@ -517,5 +517,43 @@ namespace NReco.Logging.Tests
 			}
 		}
 
+		[Fact]
+		public void RollFileOnTimeExpiration()
+		{
+			var tmpFileDir = Path.GetTempFileName();  // for test debug: "./"
+			System.IO.File.Delete(tmpFileDir);
+
+			Directory.CreateDirectory(tmpFileDir);
+			try {
+				var logFile = Path.Combine(tmpFileDir, "test.log");
+
+				LoggerFactory factory = null;
+				ILogger logger = null;
+				createFactoryAndTestLogger();
+
+				for (int i = 0; i < 5; i++) {
+					logger.LogInformation("TEST 0123456789");
+					Thread.Sleep(200);
+				}
+				factory.Dispose();
+				
+				Thread.Sleep(2000);
+				
+				Assert.Equal(5, Directory.GetFiles(tmpFileDir, "test*.log").Length);
+
+				void createFactoryAndTestLogger() {
+					factory = new LoggerFactory();
+					factory.AddProvider(new FileLoggerProvider(logFile, new FileLoggerOptions() {
+						FileTimeSpanLimit = TimeSpan.FromMilliseconds(100),
+						MaxRollingFiles = 5
+					}));
+					logger = factory.CreateLogger("TEST");
+				}
+
+			}
+			finally {
+				Directory.Delete(tmpFileDir, true);
+			}
+		}
 	}
 }

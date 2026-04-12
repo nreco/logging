@@ -13,6 +13,7 @@
 #endregion
 
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace NReco.Logging.File {
 
@@ -45,6 +46,12 @@ namespace NReco.Logging.File {
 		/// For example, if log file name is 'test.log' and max files = 3, logger will use: 'test.log', then 'test1.log', then 'test2.log' and then 'test.log' again (old content is removed).
 		/// </remarks>
 		public int MaxRollingFiles { get; set; } = 0;
+
+		/// <summary>
+		/// Determines max timespan of the one log file.
+		/// </summary>
+		/// See <see cref="FileSizeLimitBytes"/> on how this affects file names.
+		public TimeSpan	FileTimeSpanLimit { get; set; } = TimeSpan.Zero;
 
 		/// <summary>
 		/// Minimal logging level for the file logger.
