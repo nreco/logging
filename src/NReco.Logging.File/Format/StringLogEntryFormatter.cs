@@ -14,6 +14,10 @@ namespace NReco.Logging.File.Format {
 	public class StringLogEntryFormatter {
 
 		internal static readonly StringLogEntryFormatter Instance = new StringLogEntryFormatter();
+		// ForEachScope cannot use the ref-struct ValueStringBuilder as callback state, so scopes use a reusable
+		// StringBuilder and are copied into the final ValueStringBuilder without creating an intermediate string.
+		[ThreadStatic]
+		private static StringBuilder cachedScopeBuilder;
 
 		public StringLogEntryFormatter() {
 		}
@@ -64,6 +68,34 @@ namespace NReco.Logging.File.Format {
 		/// This is a low-allocation optimized tab-separated log entry formatter that formats output identical to <see cref="StringBuilderLogEntryFormat"/>
 		/// </summary>
 		public string LowAllocLogEntryFormat(string logName, DateTime timeStamp, LogLevel logLevel, EventId eventId, string message, Exception exception) {
+			return LowAllocLogEntryFormatCore(logName, timeStamp, logLevel, eventId, message, exception, null);
+		}
+
+		internal string LowAllocLogEntryFormat(string logName, DateTime timeStamp, LogLevel logLevel, EventId eventId, string message, Exception exception, IExternalScopeProvider scopeProvider) {
+			if (scopeProvider == null) {
+				return LowAllocLogEntryFormatCore(logName, timeStamp, logLevel, eventId, message, exception, null);
+			}
+
+			var scopeBuilder = cachedScopeBuilder ?? new StringBuilder();
+			// Check the builder out of the cache so re-entrant logging on this thread cannot modify it.
+			cachedScopeBuilder = null;
+			try {
+				// Match SimpleConsoleFormatter: render active scopes outer-to-inner with "=>" separators.
+				scopeProvider.ForEachScope((scope, builder) => builder.Append(builder.Length == 0 ? "=> " : " => ").Append(scope), scopeBuilder);
+
+				return LowAllocLogEntryFormatCore(logName, timeStamp, logLevel, eventId, message, exception, scopeBuilder.Length > 0 ? scopeBuilder : null);
+			} finally {
+				scopeBuilder.Clear();
+				// Match ConsoleLogger's retention limit after an unusually large entry.
+				if (scopeBuilder.Capacity > 1024) {
+					scopeBuilder.Capacity = 1024;
+				}
+				// Return this builder only if a re-entrant log entry has not already replenished the cache.
+				cachedScopeBuilder ??= scopeBuilder;
+			}
+		}
+
+		private string LowAllocLogEntryFormatCore(string logName, DateTime timeStamp, LogLevel logLevel, EventId eventId, string message, Exception exception, StringBuilder scopeBuilder) {
 			const int MaxStackAllocatedBufferLength = 256;
 			var logMessageLength = CalculateLogMessageLength();
 			char[] charBuffer = null;
@@ -74,7 +106,8 @@ namespace NReco.Logging.File.Format {
 
 				// default formatting logic
 				using var logBuilder = new ValueStringBuilder(buffer);
-				if (!string.IsNullOrEmpty(message)) {
+				// Scopes are useful context even when an exception is logged without a message.
+				if (!string.IsNullOrEmpty(message) || scopeBuilder != null) {
 					timeStamp.TryFormatO(logBuilder.RemainingRawChars, out var charsWritten);
 					logBuilder.AppendSpan(charsWritten);
 					logBuilder.Append('\t');
@@ -90,7 +123,13 @@ namespace NReco.Logging.File.Format {
 						logBuilder.AppendSpan(charsWritten);
 					}
 					logBuilder.Append("]\t");
-					logBuilder.Append(message);
+					if (scopeBuilder != null) {
+						logBuilder.Append(scopeBuilder);
+						logBuilder.Append('\t');
+					}
+					if (!string.IsNullOrEmpty(message)) {
+						logBuilder.Append(message);
+					}
 				}
 
 				if (exception != null) {
@@ -114,6 +153,7 @@ namespace NReco.Logging.File.Format {
 					+ 3 /* "]\t[" */
 					+ (eventId.Name?.Length ?? eventId.Id.GetFormattedLength())
 					+ 2 /* "]\t" */
+					+ (scopeBuilder is null ? 0 : scopeBuilder.Length + 1) /* scopes + '\t' */
 					+ (message?.Length ?? 0);
 			}
 		}

@@ -40,11 +40,22 @@ Example of the configuration section in appsettings.json:
 		"Path": "app.log",
 		"Append": true,
 		"MinLevel": "Warning",  // min level for the file logger
+		"IncludeScopes": false,  // set to true to include logging scopes
 		"FileSizeLimitBytes": 0,  // use to activate rolling file behaviour
 		"MaxRollingFiles": 0  // use to specify max number of log files
 	}
 }
 ```
+
+## Logging scopes
+Logging scopes can be included in the default log entry format by setting `FileLoggerOptions.IncludeScopes` to `true` (the default is `false`):
+```csharp
+loggingBuilder.AddFile("app.log", fileLoggerOpts => {
+	fileLoggerOpts.IncludeScopes = true;
+});
+```
+Active scopes are written from outermost to innermost before the message, for example: `=> Request 123 => Processing order`.
+`IncludeScopes` applies only to the built-in formatter and does not change custom `FormatLogEntry` behavior.
 
 ## Rolling File
 This feature is activated with `FileLoggerOptions` properties: `FileSizeLimitBytes` and `MaxRollingFiles`. Lets assume that file logger is configured for "test.log":

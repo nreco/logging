@@ -50,6 +50,11 @@ namespace NReco.Logging.File {
 		/// Minimal logging level for the file logger.
 		/// </summary>
 		public LogLevel MinLevel { get; set; } = LogLevel.Trace;
+
+		/// <summary>
+		/// Gets or sets a value that indicates whether scopes are included. Defaults to false.
+		/// </summary>
+		public bool IncludeScopes { get; set; }
 	}
 
 }

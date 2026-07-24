@@ -48,6 +48,12 @@ namespace NReco.Logging.File {
 		public bool UseUtcTimestamp { get; set; }
 
 		/// <summary>
+		/// Gets or sets a value that indicates whether scopes are included. Defaults to false.
+		/// </summary>
+		/// <remarks>To preserve the existing <see cref="LogMessage"/> API, scopes are included only by the built-in formatter. Custom <see cref="FormatLogEntry"/> delegates do not receive scope data.</remarks>
+		public bool IncludeScopes { get; set; }
+
+		/// <summary>
 		/// Custom formatter for the log entry line. 
 		/// </summary>
 		public Func<LogMessage, string> FormatLogEntry { get; set; }

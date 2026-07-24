@@ -35,6 +35,95 @@ namespace NReco.Logging.Tests {
 			LowAllocLogEntryFormat("aaa", LogLevel.Trace, 0, String.Concat(Enumerable.Repeat("TestValue ", 1000)), "test");
 		}
 
+		[Fact]
+		public void LowAllocLogEntryFormatScopes() {
+			var formatter = StringLogEntryFormatter.Instance;
+			var scopeProvider = new LoggerExternalScopeProvider();
+			var dt = DateTime.UtcNow;
+			using (scopeProvider.Push("Outer"))
+			using (scopeProvider.Push("Inner")) {
+				var result = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Message", null, scopeProvider);
+
+				// Nested scopes should render outer-to-inner immediately before the message.
+				Assert.Equal($"{dt:o}\tINFO\t[test]\t[7]\t=> Outer => Inner\tMessage", result);
+			}
+		}
+
+		[Fact]
+		public void LowAllocLogEntryFormatNoActiveScopes() {
+			var formatter = StringLogEntryFormatter.Instance;
+			var scopeProvider = new LoggerExternalScopeProvider();
+			var dt = DateTime.UtcNow;
+
+			var result = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Message", null, scopeProvider);
+
+			// With no active scopes, the output should match the original formatter output.
+			Assert.Equal(formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Message", null), result);
+		}
+
+		[Fact]
+		public void LowAllocLogEntryFormatExceptionOnlyIncludesScopes() {
+			var formatter = StringLogEntryFormatter.Instance;
+			var scopeProvider = new LoggerExternalScopeProvider();
+			var dt = DateTime.UtcNow;
+			var exception = new InvalidOperationException("Error");
+			using (scopeProvider.Push("Scope")) {
+				var result = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Error, new EventId(7), null, exception, scopeProvider);
+
+				// An exception-only entry should still include its active scope.
+				Assert.Equal($"{dt:o}\tFAIL\t[test]\t[7]\t=> Scope\t{exception}{Environment.NewLine}", result);
+			}
+		}
+
+		[Fact]
+		public void LowAllocLogEntryFormatExceptionOnlyWithoutActiveScopes() {
+			var formatter = StringLogEntryFormatter.Instance;
+			var scopeProvider = new LoggerExternalScopeProvider();
+			var dt = DateTime.UtcNow;
+			var exception = new InvalidOperationException("Error");
+
+			var result = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Error, new EventId(7), null, exception, scopeProvider);
+
+			Assert.Equal(formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Error, new EventId(7), null, exception), result);
+		}
+
+		[Fact]
+		public void LowAllocLogEntryFormatReentrantScopeToString() {
+			var formatter = StringLogEntryFormatter.Instance;
+			var scopeProvider = new LoggerExternalScopeProvider();
+			var dt = DateTime.UtcNow;
+			string innerResult = null;
+			var scope = new ReentrantScope("Scope", onFirstToString: () => {
+				// Appending a scope calls its user-defined ToString(), which may itself log.
+				// Simulate that by formatting another entry before the outer call has finished.
+				innerResult = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Inner", null, scopeProvider);
+			});
+
+			string outerResult;
+			using (scopeProvider.Push(scope)) {
+				outerResult = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Outer", null, scopeProvider);
+			}
+
+			// Despite both calls running on the same thread, each must retain its own scope builder and message.
+			Assert.Equal($"{dt:o}\tINFO\t[test]\t[7]\t=> Scope\tInner", innerResult);
+			Assert.Equal($"{dt:o}\tINFO\t[test]\t[7]\t=> Scope\tOuter", outerResult);
+		}
+
+		[Fact]
+		public void LowAllocLogEntryFormatLongAndNullScopes() {
+			var formatter = StringLogEntryFormatter.Instance;
+			var scopeProvider = new LoggerExternalScopeProvider();
+			var dt = DateTime.UtcNow;
+			var longScope = String.Concat(Enumerable.Repeat("Scope", 1000));
+			using (scopeProvider.Push(null))
+			using (scopeProvider.Push(longScope)) {
+				var result = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Message", null, scopeProvider);
+
+				// Null scopes should render consistently, and long scopes should not be truncated.
+				Assert.Equal($"{dt:o}\tINFO\t[test]\t[7]\t=>  => {longScope}\tMessage", result);
+			}
+		}
+
 
 		[Fact]
 		public void GetFormattedLengthOfZero() {
@@ -226,6 +315,24 @@ namespace NReco.Logging.Tests {
 			Assert.True(span.SequenceEqual(expected));
 		}
 
+		private sealed class ReentrantScope {
+			private readonly string value;
+			private readonly Action onFirstToString;
+			private bool hasFormatted;
+
+			public ReentrantScope(string value, Action onFirstToString) {
+				this.value = value;
+				this.onFirstToString = onFirstToString;
+			}
+
+			public override string ToString() {
+				if (!hasFormatted) {
+					hasFormatted = true;
+					onFirstToString();
+				}
+				return value;
+			}
+		}
 
 	}
 }

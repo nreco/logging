@@ -25,7 +25,7 @@ namespace NReco.Logging.File {
 	/// Generic file logger provider.
 	/// </summary>
 	[ProviderAlias("File")]
-	public class FileLoggerProvider : ILoggerProvider {
+	public class FileLoggerProvider : ILoggerProvider, ISupportExternalScope {
 
 		private string LogFileName;
 
@@ -36,6 +36,7 @@ namespace NReco.Logging.File {
 		private readonly FileWriter fWriter;
 
 		internal FileLoggerOptions Options { get; private set; }
+		internal IExternalScopeProvider ScopeProvider { get; private set; }
 
 		private bool Append => Options.Append;
 		private long FileSizeLimitBytes => Options.FileSizeLimitBytes;
@@ -97,6 +98,12 @@ namespace NReco.Logging.File {
 
 		public ILogger CreateLogger(string categoryName) {
 			return loggers.GetOrAdd(categoryName, CreateLoggerImplementation);
+		}
+
+		/// <inheritdoc />
+		public void SetScopeProvider(IExternalScopeProvider scopeProvider) {
+			// Keep this centrally so existing loggers also observe a replacement, matching ConsoleLogger's defensive behavior.
+			ScopeProvider = scopeProvider;
 		}
 
 		public void Dispose() {

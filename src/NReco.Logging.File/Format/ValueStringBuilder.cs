@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 #nullable enable
 
@@ -213,6 +214,25 @@ namespace NReco.Logging.File.Format {
 
 			value.CopyTo(_chars.Slice(_pos));
 			_pos += value.Length;
+		}
+
+		public void Append(StringBuilder value) {
+			if (value == null || value.Length == 0) {
+				return;
+			}
+
+#if NETSTANDARD2_0
+			// netstandard2.0 lacks StringBuilder.CopyTo(Span<char>), so use a pooled array instead of allocating a string.
+			var buffer = ArrayPool<char>.Shared.Rent(value.Length);
+			try {
+				value.CopyTo(0, buffer, 0, value.Length);
+				Append(buffer.AsSpan(0, value.Length));
+			} finally {
+				ArrayPool<char>.Shared.Return(buffer);
+			}
+#else
+			value.CopyTo(0, AppendSpan(value.Length), value.Length);
+#endif
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
