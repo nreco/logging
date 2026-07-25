@@ -104,7 +104,7 @@ namespace NReco.Logging.Tests {
 				outerResult = formatter.LowAllocLogEntryFormat("test", dt, LogLevel.Information, new EventId(7), "Outer", null, scopeProvider);
 			}
 
-			// Despite both calls running on the same thread, each must retain its own scope builder and message.
+			// Despite both calls running on the same thread, each must retain its own scopes and message.
 			Assert.Equal($"{dt:o}\tINFO\t[test]\t[7]\t=> Scope\tInner", innerResult);
 			Assert.Equal($"{dt:o}\tINFO\t[test]\t[7]\t=> Scope\tOuter", outerResult);
 		}
