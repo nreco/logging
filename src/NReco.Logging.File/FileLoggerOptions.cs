@@ -50,7 +50,7 @@ namespace NReco.Logging.File {
 		/// <summary>
 		/// Gets or sets a value that indicates whether scopes are included. Defaults to false.
 		/// </summary>
-		/// <remarks>To preserve the existing <see cref="LogMessage"/> API, scopes are included only by the built-in formatter. Custom <see cref="FormatLogEntry"/> delegates do not receive scope data.</remarks>
+		/// <remarks>When enabled, scopes are written by the built-in formatter. A custom <see cref="FormatLogEntry"/> delegate replaces that format entirely and can render scopes itself via <see cref="LogMessage.ScopeProvider"/>, which is supplied only while this option is enabled.</remarks>
 		public bool IncludeScopes { get; set; }
 
 		/// <summary>

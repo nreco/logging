@@ -594,7 +594,7 @@ namespace NReco.Logging.Tests
 		}
 
 		[Fact]
-		public void CustomFormatLogEntryIgnoresScopes() {
+		public void CustomFormatLogEntryDoesNotIncludeScopesByDefault() {
 			var tmpFile = Path.GetTempFileName();
 			try {
 				using (var factory = new LoggerFactory()) {
@@ -610,6 +610,79 @@ namespace NReco.Logging.Tests
 				}
 
 				Assert.Equal($"Custom: Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryCanIncludeScopes() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+						Append = false,
+						IncludeScopes = true,
+						FormatLogEntry = logMessage => {
+							var scopes = new List<string>();
+							logMessage.ScopeProvider?.ForEachScope((scope, state) => state.Add(scope?.ToString()), scopes);
+							return $"[{String.Join(",", scopes)}] {logMessage.Message}";
+						}
+					}));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Outer"))
+					using (logger.BeginScope("Inner")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"[Outer,Inner] Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryHasNoScopeProviderWhenScopesDisabled() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					// IncludeScopes is the single opt-in, so a custom handler cannot reach scopes while it is off.
+					factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+						Append = false,
+						IncludeScopes = false,
+						FormatLogEntry = logMessage => $"{logMessage.ScopeProvider == null}: {logMessage.Message}"
+					}));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"True: Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryHasNoScopeProviderWithoutFactory() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				// A provider created directly is never handed a scope provider by a logging factory,
+				// so scopes stay unavailable even though they are enabled.
+				using (var provider = new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+					Append = false,
+					IncludeScopes = true,
+					FormatLogEntry = logMessage => $"{logMessage.ScopeProvider == null}: {logMessage.Message}"
+				})) {
+					var logger = provider.CreateLogger("TEST");
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"True: Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
 			} finally {
 				System.IO.File.Delete(tmpFile);
 			}

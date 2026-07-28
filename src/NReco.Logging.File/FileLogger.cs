@@ -50,16 +50,20 @@ namespace NReco.Logging.File {
 
 			string message = formatter(state, exception);
 
+			// IncludeScopes is the single opt-in for scope handling: when it is off, no formatter can reach scopes
+			// and the original formatting path does no scope work.
+			var scopeProvider = LoggerPrv.Options.IncludeScopes ? LoggerPrv.ScopeProvider : null;
+
 			if (LoggerPrv.Options.FilterLogEntry != null)
-				if (!LoggerPrv.Options.FilterLogEntry(new LogMessage(logName, logLevel, eventId, message, exception)))
+				if (!LoggerPrv.Options.FilterLogEntry(
+						new LogMessage(logName, logLevel, eventId, message, exception, scopeProvider)))
 					return;
 
 			if (LoggerPrv.FormatLogEntry != null) {
 				LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(
-					new LogMessage(logName, logLevel, eventId, message, exception)));
+					new LogMessage(logName, logLevel, eventId, message, exception, scopeProvider)));
 			}
 			else {
-				// Pass no scope provider unless explicitly enabled so the original formatting path does no scope work.
 				LoggerPrv.WriteEntry( 
 					Format.StringLogEntryFormatter.Instance.LowAllocLogEntryFormat(
 						logName,
@@ -68,7 +72,7 @@ namespace NReco.Logging.File {
 						eventId,
 						message,
 						exception,
-						LoggerPrv.Options.IncludeScopes ? LoggerPrv.ScopeProvider : null));
+						scopeProvider));
 			}
 		}
 

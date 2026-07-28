@@ -55,7 +55,7 @@ loggingBuilder.AddFile("app.log", fileLoggerOpts => {
 });
 ```
 Active scopes are written from outermost to innermost before the message, for example: `=> Request 123 => Processing order`.
-`IncludeScopes` applies only to the built-in formatter and does not change custom `FormatLogEntry` behavior.
+A custom `FormatLogEntry` handler replaces this format entirely and can render scopes itself with `LogMessage.ScopeProvider`, which is also gated by `IncludeScopes`.
 
 ## Rolling File
 This feature is activated with `FileLoggerOptions` properties: `FileSizeLimitBytes` and `MaxRollingFiles`. Lets assume that file logger is configured for "test.log":

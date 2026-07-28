@@ -24,12 +24,24 @@ namespace NReco.Logging.File {
 		public readonly EventId EventId;
 		public readonly Exception Exception;
 
-		internal LogMessage(string logName, LogLevel level, EventId eventId, string message, Exception ex) {
+		/// <summary>
+		/// Provides access to the active logging scopes, or <c>null</c> when scopes are unavailable.
+		/// </summary>
+		/// <remarks>
+		/// This is <c>null</c> unless <see cref="FileLoggerOptions.IncludeScopes"/> is enabled, so that option remains
+		/// the single opt-in for scope handling. It is also <c>null</c> if the logger provider was never given a scope
+		/// provider by a logging factory.
+		/// </remarks>
+		public readonly IExternalScopeProvider ScopeProvider;
+
+		internal LogMessage(string logName, LogLevel level, EventId eventId, string message, Exception ex,
+				IExternalScopeProvider scopeProvider = null) {
 			LogName = logName;
 			Message = message;
 			LogLevel = level;
 			EventId = eventId;
 			Exception = ex;
+			ScopeProvider = scopeProvider;
 		}
 
 	}
