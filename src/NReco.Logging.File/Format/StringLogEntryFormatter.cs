@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,11 @@ namespace NReco.Logging.File.Format {
 	public class StringLogEntryFormatter {
 
 		internal static readonly StringLogEntryFormatter Instance = new StringLogEntryFormatter();
+		// ForEachScope cannot use the ref-struct ValueStringBuilder as callback state, so scopes are collected into a
+		// reusable list first and appended to the final ValueStringBuilder directly. This list holds one entry per
+		// active scope, so its capacity stays as small as the scope nesting and never needs to be trimmed.
+		[ThreadStatic]
+		private static List<string> cachedScopes;
 
 		public StringLogEntryFormatter() {
 		}
@@ -64,6 +70,31 @@ namespace NReco.Logging.File.Format {
 		/// This is a low-allocation optimized tab-separated log entry formatter that formats output identical to <see cref="StringBuilderLogEntryFormat"/>
 		/// </summary>
 		public string LowAllocLogEntryFormat(string logName, DateTime timeStamp, LogLevel logLevel, EventId eventId, string message, Exception exception) {
+			return LowAllocLogEntryFormatCore(logName, timeStamp, logLevel, eventId, message, exception, null);
+		}
+
+		internal string LowAllocLogEntryFormat(string logName, DateTime timeStamp, LogLevel logLevel, EventId eventId, string message, Exception exception, IExternalScopeProvider scopeProvider) {
+			if (scopeProvider == null) {
+				return LowAllocLogEntryFormatCore(logName, timeStamp, logLevel, eventId, message, exception, null);
+			}
+
+			var scopes = cachedScopes ?? new List<string>();
+			// Check the list out of the cache so re-entrant logging on this thread cannot modify it.
+			cachedScopes = null;
+			try {
+				// Render each scope exactly once. Only the resulting strings are kept, so user scope objects are not
+				// held alive after the entry is formatted.
+				scopeProvider.ForEachScope(static (scope, state) => state.Add(scope?.ToString()), scopes);
+
+				return LowAllocLogEntryFormatCore(logName, timeStamp, logLevel, eventId, message, exception, scopes.Count > 0 ? scopes : null);
+			} finally {
+				scopes.Clear();
+				// Return this list only if a re-entrant log entry has not already replenished the cache.
+				cachedScopes ??= scopes;
+			}
+		}
+
+		private string LowAllocLogEntryFormatCore(string logName, DateTime timeStamp, LogLevel logLevel, EventId eventId, string message, Exception exception, List<string> scopes) {
 			const int MaxStackAllocatedBufferLength = 256;
 			var logMessageLength = CalculateLogMessageLength();
 			char[] charBuffer = null;
@@ -74,7 +105,8 @@ namespace NReco.Logging.File.Format {
 
 				// default formatting logic
 				using var logBuilder = new ValueStringBuilder(buffer);
-				if (!string.IsNullOrEmpty(message)) {
+				// Scopes are useful context even when an exception is logged without a message.
+				if (!string.IsNullOrEmpty(message) || scopes != null) {
 					timeStamp.TryFormatO(logBuilder.RemainingRawChars, out var charsWritten);
 					logBuilder.AppendSpan(charsWritten);
 					logBuilder.Append('\t');
@@ -90,7 +122,17 @@ namespace NReco.Logging.File.Format {
 						logBuilder.AppendSpan(charsWritten);
 					}
 					logBuilder.Append("]\t");
-					logBuilder.Append(message);
+					if (scopes != null) {
+						// Match SimpleConsoleFormatter: render active scopes outer-to-inner with "=>" separators.
+						for (var i = 0; i < scopes.Count; i++) {
+							logBuilder.Append(i == 0 ? "=> " : " => ");
+							logBuilder.Append(scopes[i]);
+						}
+						logBuilder.Append('\t');
+					}
+					if (!string.IsNullOrEmpty(message)) {
+						logBuilder.Append(message);
+					}
 				}
 
 				if (exception != null) {
@@ -114,7 +156,20 @@ namespace NReco.Logging.File.Format {
 					+ 3 /* "]\t[" */
 					+ (eventId.Name?.Length ?? eventId.Id.GetFormattedLength())
 					+ 2 /* "]\t" */
+					+ GetScopesLength()
 					+ (message?.Length ?? 0);
+			}
+
+			int GetScopesLength() {
+				if (scopes is null) {
+					return 0;
+				}
+
+				var scopesLength = 1 /* '\t' */;
+				for (var i = 0; i < scopes.Count; i++) {
+					scopesLength += (i == 0 ? 3 /* "=> " */ : 4 /* " => " */) + (scopes[i]?.Length ?? 0);
+				}
+				return scopesLength;
 			}
 		}
 

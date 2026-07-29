@@ -30,7 +30,8 @@ namespace NReco.Logging.File {
 			this.LoggerPrv = loggerPrv;
 		}
 		public IDisposable BeginScope<TState>(TState state) {
-			return null;
+			// Support BeginScope when FileLogger is used directly, matching ConsoleLogger.
+			return LoggerPrv.ScopeProvider?.Push(state);
 		}
 
 		public bool IsEnabled(LogLevel logLevel) {
@@ -49,13 +50,18 @@ namespace NReco.Logging.File {
 
 			string message = formatter(state, exception);
 
+			// IncludeScopes is the single opt-in for scope handling: when it is off, no formatter can reach scopes
+			// and the original formatting path does no scope work.
+			var scopeProvider = LoggerPrv.Options.IncludeScopes ? LoggerPrv.ScopeProvider : null;
+
 			if (LoggerPrv.Options.FilterLogEntry != null)
-				if (!LoggerPrv.Options.FilterLogEntry(new LogMessage(logName, logLevel, eventId, message, exception)))
+				if (!LoggerPrv.Options.FilterLogEntry(
+						new LogMessage(logName, logLevel, eventId, message, exception, scopeProvider)))
 					return;
 
 			if (LoggerPrv.FormatLogEntry != null) {
 				LoggerPrv.WriteEntry(LoggerPrv.FormatLogEntry(
-					new LogMessage(logName, logLevel, eventId, message, exception)));
+					new LogMessage(logName, logLevel, eventId, message, exception, scopeProvider)));
 			}
 			else {
 				LoggerPrv.WriteEntry( 
@@ -65,7 +71,8 @@ namespace NReco.Logging.File {
 						logLevel,
 						eventId,
 						message,
-						exception));
+						exception,
+						scopeProvider));
 			}
 		}
 

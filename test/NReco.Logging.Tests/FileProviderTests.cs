@@ -517,5 +517,175 @@ namespace NReco.Logging.Tests
 			}
 		}
 
+		[Fact]
+		public void ScopesAreDisabledByDefault() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					factory.AddProvider(new FileLoggerProvider(tmpFile, false));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				var logEntry = System.IO.File.ReadAllText(tmpFile);
+				// Scopes should not appear unless they are explicitly enabled.
+				Assert.DoesNotContain("Scope", logEntry);
+				Assert.Contains("\tMessage", logEntry);
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void WriteNestedScopesInOuterToInnerOrder() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+						Append = false,
+						IncludeScopes = true
+					}));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Outer")) {
+						using (logger.BeginScope("Inner")) {
+							logger.LogInformation("Nested");
+						}
+						logger.LogInformation("Outer only");
+					}
+					logger.LogInformation("No scope");
+				}
+
+				var logEntries = System.IO.File.ReadAllLines(tmpFile);
+				// Disposing the inner scope should leave the outer scope active; disposing both should leave neither.
+				Assert.Equal("=> Outer => Inner", logEntries[0].Split('\t')[4]);
+				Assert.Equal("Nested", logEntries[0].Split('\t')[5]);
+
+				Assert.Equal("=> Outer", logEntries[1].Split('\t')[4]);
+				Assert.Equal("Outer only", logEntries[1].Split('\t')[5]);
+
+				Assert.Equal("No scope", logEntries[2].Split('\t')[4]);
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void LoggerCreatedBeforeScopeProviderUsesScopes() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var provider = new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+					Append = false,
+					IncludeScopes = true
+				})) {
+					var logger = provider.CreateLogger("TEST");
+					provider.SetScopeProvider(new LoggerExternalScopeProvider());
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				// A logger created before SetScopeProvider should use the provider assigned later.
+				Assert.Contains("\t=> Scope\tMessage", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryDoesNotIncludeScopesByDefault() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+						Append = false,
+						IncludeScopes = true,
+						FormatLogEntry = logMessage => $"Custom: {logMessage.Message}"
+					}));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"Custom: Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryCanIncludeScopes() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+						Append = false,
+						IncludeScopes = true,
+						FormatLogEntry = logMessage => {
+							var scopes = new List<string>();
+							logMessage.ScopeProvider?.ForEachScope((scope, state) => state.Add(scope?.ToString()), scopes);
+							return $"[{String.Join(",", scopes)}] {logMessage.Message}";
+						}
+					}));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Outer"))
+					using (logger.BeginScope("Inner")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"[Outer,Inner] Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryHasNoScopeProviderWhenScopesDisabled() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				using (var factory = new LoggerFactory()) {
+					// IncludeScopes is the single opt-in, so a custom handler cannot reach scopes while it is off.
+					factory.AddProvider(new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+						Append = false,
+						IncludeScopes = false,
+						FormatLogEntry = logMessage => $"{logMessage.ScopeProvider == null}: {logMessage.Message}"
+					}));
+					var logger = factory.CreateLogger("TEST");
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"True: Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
+
+		[Fact]
+		public void CustomFormatLogEntryHasNoScopeProviderWithoutFactory() {
+			var tmpFile = Path.GetTempFileName();
+			try {
+				// A provider created directly is never handed a scope provider by a logging factory,
+				// so scopes stay unavailable even though they are enabled.
+				using (var provider = new FileLoggerProvider(tmpFile, new FileLoggerOptions() {
+					Append = false,
+					IncludeScopes = true,
+					FormatLogEntry = logMessage => $"{logMessage.ScopeProvider == null}: {logMessage.Message}"
+				})) {
+					var logger = provider.CreateLogger("TEST");
+					using (logger.BeginScope("Scope")) {
+						logger.LogInformation("Message");
+					}
+				}
+
+				Assert.Equal($"True: Message{Environment.NewLine}", System.IO.File.ReadAllText(tmpFile));
+			} finally {
+				System.IO.File.Delete(tmpFile);
+			}
+		}
 	}
 }
