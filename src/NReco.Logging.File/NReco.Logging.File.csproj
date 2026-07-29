@@ -14,9 +14,9 @@ services.AddLogging(loggingBuilder =&gt; {
 More details and examples: https://github.com/nreco/logging
 </Description>
     <Title>NET10 / NET8 / NET6 (.NET Core) file logger provider.</Title>
-	<Copyright>Copyright (c) 2017-2025 Vitalii Fedorchenko and contributors</Copyright>
+	<Copyright>Copyright (c) 2017-2026 Vitalii Fedorchenko and contributors</Copyright>
     <AssemblyTitle>NReco.Logging.File</AssemblyTitle>
-    <VersionPrefix>1.3.1</VersionPrefix>
+    <VersionPrefix>1.4.0</VersionPrefix>
     <Authors>Vitalii Fedorchenko and contributors</Authors>
     <TargetFrameworks>netstandard2.0;net6.0;net8.0;net10.0</TargetFrameworks>
     <LangVersion>12.0</LangVersion>
@@ -28,6 +28,9 @@ More details and examples: https://github.com/nreco/logging
     <PackageProjectUrl>https://github.com/nreco/logging</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/nreco/logging/master/LICENSE</PackageLicenseUrl>
 	<PackageReleaseNotes>How to use: https://github.com/nreco/logging
+
+Version 1.4.0 changes:
+ - Add optional logging scope support. (#86)
 
 Version 1.3.1 changes:
  - return netstandard2.0 as .NET Framework apps need it

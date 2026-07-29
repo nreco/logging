@@ -1,5 +1,5 @@
 # NReco.Logging.File
-Simple and efficient file logger provider for NET6 / NET8 / NET9 without any additional dependencies.
+Simple and efficient file logger provider for .NET Core (NET6+, NET10, NET11) without any additional dependencies.
 
 NuGet | Tests
 --- | --- 
@@ -125,6 +125,6 @@ A new file name is applied in the same way as when it comes from the initial `Fi
 
 
 ## License
-Copyright 2017-2025 Vitaliy Fedorchenko and contributors
+Copyright 2017-2026 Vitaliy Fedorchenko and contributors
 
 Distributed under the MIT license
