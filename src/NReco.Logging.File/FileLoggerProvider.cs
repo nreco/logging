@@ -14,10 +14,14 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Win32.SafeHandles;
 
 namespace NReco.Logging.File {
 
@@ -39,6 +43,8 @@ namespace NReco.Logging.File {
 		internal IExternalScopeProvider ScopeProvider { get; private set; }
 
 		private bool Append => Options.Append;
+		private bool ShareWriteAccess => Options.ShareWriteAccess;
+		private bool ShareDeleteAccess => Options.ShareDeleteAccess;
 		private long FileSizeLimitBytes => Options.FileSizeLimitBytes;
 		private int MaxRollingFiles => Options.MaxRollingFiles;
 
@@ -220,12 +226,20 @@ namespace NReco.Logging.File {
 				// so there is no need for a "manual" check first.
 				fileInfo.Directory.Create();
 
-				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-				if (append) {
-					LogFileStream.Seek(0, SeekOrigin.End);
-				} else {
-					LogFileStream.SetLength(0); // clear the file
+				var fileShare = FileShare.Read;
+				if (FileLogPrv.ShareWriteAccess) {
+					fileShare |= FileShare.Write;
 				}
+				if (FileLogPrv.ShareDeleteAccess) {
+					fileShare |= FileShare.Delete;
+				}
+
+				if (!append) {
+					// !append means that the logfile should be truncated before use
+					// an append-only stream cannot truncate, so the file is cleared through a separate short-lived file handle with FileMode.Create
+					using (new FileStream(LogFileName, FileMode.Create, FileAccess.Write, fileShare)) { }
+				}
+				LogFileStream = AppendingFileStream.Open(LogFileName, fileShare);
 				LogFileWriter = new StreamWriter(LogFileStream);
 			}
 
@@ -335,9 +349,20 @@ namespace NReco.Logging.File {
 				}
 			}
 
+			void CheckCurrentLogFile() {
+				if (FileLogPrv.ShareDeleteAccess) {
+					// check if file was deleted
+					if (!System.IO.File.Exists(LogFileName)) {
+						Close();
+						OpenFile(false);
+					}
+				}
+			}
+
 			internal void WriteMessage(string message, bool flush) {
 				if (LogFileWriter != null) {
 					CheckForNewLogFile();
+					CheckCurrentLogFile();
 					LogFileWriter.WriteLine(message);
 					if (flush)
 						LogFileWriter.Flush();
@@ -432,6 +457,57 @@ namespace NReco.Logging.File {
 			}
 		}
 
+	}
+
+	/// <summary>
+	/// Opens write-only file streams that always append at the current end of file.
+	/// </summary>
+	internal static class AppendingFileStream {
+
+		internal static FileStream Open(string fileName, FileShare share) {
+
+			// on windows systems FileMode.Append does not result in atomic appends,
+			// so we use a custom implementation that opens a file handle with FILE_APPEND_DATA access
+			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
+				return Windows.Open(fileName, share);
+			}
+
+			// on other systems FileMode.Append should be translated to O_APPEND, which appends atomically
+			return Generic.Open(fileName, share);
+		}
+
+		static class Generic {
+			internal static FileStream Open(string fileName, FileShare share) {
+				return new FileStream(fileName, FileMode.Append, FileAccess.Write, share);
+			}
+		}
+
+		[SupportedOSPlatform("windows")]
+		static class Windows {
+
+			const uint FILE_APPEND_DATA = 0x0004;
+			const uint SYNCHRONIZE = 0x00100000;
+			const uint OPEN_ALWAYS = 4;
+			const uint FILE_ATTRIBUTE_NORMAL = 0x80;
+
+			[DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+			static extern SafeFileHandle CreateFile(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+			
+			internal static FileStream Open(string fileName, FileShare share) {
+				// FileShare values match the FILE_SHARE_* flags from win32, but FileShare.Inheritable has no win32 counterpart, so we remove it from the share flags before calling CreateFile
+				var shareMode = (uint)(share & ~FileShare.Inheritable);
+
+				// a handle that holds FILE_APPEND_DATA without FILE_WRITE_DATA makes the kernel ignore the internal write offset
+				var handle = CreateFile(fileName, FILE_APPEND_DATA | SYNCHRONIZE, shareMode, IntPtr.Zero, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, IntPtr.Zero);
+
+				if (handle.IsInvalid) {
+					var lastError = Marshal.GetLastWin32Error();
+					handle.Dispose();
+					throw new IOException($"Cannot open file '{fileName}'.", new Win32Exception(lastError));
+				}
+				return new FileStream(handle, FileAccess.Write);
+			}
+		}
 	}
 
 }
