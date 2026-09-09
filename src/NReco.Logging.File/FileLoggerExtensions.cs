@@ -123,6 +123,8 @@ namespace NReco.Logging.File {
 			var fileLoggerOptions = new FileLoggerOptions();
 
 			fileLoggerOptions.Append = config.Append;
+			fileLoggerOptions.ShareWriteAccess = config.ShareWriteAccess;
+			fileLoggerOptions.ShareDeleteAccess = config.ShareDeleteAccess;
 			fileLoggerOptions.MinLevel = config.MinLevel;
 			fileLoggerOptions.FileSizeLimitBytes = config.FileSizeLimitBytes;
 			fileLoggerOptions.MaxRollingFiles = config.MaxRollingFiles;

@@ -39,6 +39,8 @@ Example of the configuration section in appsettings.json:
 	"File": {
 		"Path": "app.log",
 		"Append": true,
+		"ShareWriteAccess": false,  // set to true to let other processes write to the log file
+		"ShareDeleteAccess": false,  // set to true to let other processes delete or move the log file
 		"MinLevel": "Warning",  // min level for the file logger
 		"IncludeScopes": false,  // set to true to include logging scopes
 		"FileSizeLimitBytes": 0,  // use to activate rolling file behaviour
@@ -123,6 +125,25 @@ Real-life implementation may be more complicated to guarantee that a new file na
 
 A new file name is applied in the same way as when it comes from the initial `FileLoggerProvider` options (if `FormatLogFileName` is specified it is called to resolve a final log file name).
 
+
+## Sharing the log file with other processes
+By default the log file is opened for exclusive writing: other processes may only read it. This can be relaxed with two `FileLoggerOptions` properties:
+
+```csharp
+loggingBuilder.AddFile("app.log", fileLoggerOpts => {
+	fileLoggerOpts.ShareWriteAccess = true;
+	fileLoggerOpts.ShareDeleteAccess = true;
+});
+```
+
+* `ShareWriteAccess` (default `false`) allows other processes to write to the same log file. When it is enabled the file logger switches to an append-only file handle so that its own writes cannot overwrite entries that were appended by someone else in the meantime.
+* `ShareDeleteAccess` (default `false`) allows other processes to delete or move the log file, which is what external log rotation tools usually do. When it is enabled the file logger checks before every write whether the current log file still exists and re-creates it if it does not.
+
+## Platform-specific behavior
+The options above rely on file sharing semantics that are not identical on all platforms:
+
+* On Windows `FileShare` is enforced by the operating system, so a second writer really is rejected unless `ShareWriteAccess` is enabled. Because `FileMode.Append` on Windows only seeks to the end of the file once, `ShareWriteAccess` opens the file through a win32 handle with `FILE_APPEND_DATA` access, which makes the kernel append at the current end of the file on every write.
+* On Linux and macOS `FileShare` is only advisory and is enforced between file streams of the same process, not across processes. Concurrent writers are therefore possible regardless of `ShareWriteAccess`, and a log file can always be deleted or moved by another process. `ShareWriteAccess` still matters there: it opens the file with `FileMode.Append` (the `O_APPEND` open flag), which guarantees atomic appends, and `ShareDeleteAccess` is still needed to make the logger re-create a log file that was removed externally.
 
 ## License
 Copyright 2017-2026 Vitaliy Fedorchenko and contributors

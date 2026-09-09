@@ -39,6 +39,8 @@ namespace NReco.Logging.File {
 		internal IExternalScopeProvider ScopeProvider { get; private set; }
 
 		private bool Append => Options.Append;
+		private bool ShareWriteAccess => Options.ShareWriteAccess;
+		private bool ShareDeleteAccess => Options.ShareDeleteAccess;
 		private long FileSizeLimitBytes => Options.FileSizeLimitBytes;
 		private int MaxRollingFiles => Options.MaxRollingFiles;
 
@@ -171,6 +173,7 @@ namespace NReco.Logging.File {
 		internal class FileWriter {
 
 			readonly FileLoggerProvider FileLogPrv;
+			readonly IAppendingFileStreamFactory AppendingFileStreamFactory;
 			string LogFileName;
 			int RollingNumber;
 			Stream LogFileStream;
@@ -178,6 +181,7 @@ namespace NReco.Logging.File {
 
 			internal FileWriter(FileLoggerProvider fileLogPrv) {
 				FileLogPrv = fileLogPrv;
+				AppendingFileStreamFactory = File.AppendingFileStreamFactory.CreateForCurrentPlatform();
 
 				DetermineLastFileLogName();
 				OpenFile(FileLogPrv.Append);
@@ -220,11 +224,28 @@ namespace NReco.Logging.File {
 				// so there is no need for a "manual" check first.
 				fileInfo.Directory.Create();
 
-				LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read);
-				if (append) {
-					LogFileStream.Seek(0, SeekOrigin.End);
+				var fileShare = FileShare.Read;
+				if (FileLogPrv.ShareWriteAccess) {
+					fileShare |= FileShare.Write;
+				}
+				if (FileLogPrv.ShareDeleteAccess) {
+					fileShare |= FileShare.Delete;
+				}
+
+				if (FileLogPrv.ShareWriteAccess) {
+					// concurrent writers require appends that are atomic with respect to the current end of the file
+					if (!append) {
+						// an append-only stream cannot truncate, so the file is cleared through a separate short-lived file handle
+						using (new FileStream(LogFileName, FileMode.Create, FileAccess.Write, fileShare)) { }
+					}
+					LogFileStream = AppendingFileStreamFactory.Open(LogFileName, fileShare);
 				} else {
-					LogFileStream.SetLength(0); // clear the file
+					LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write, fileShare);
+					if (append) {
+						LogFileStream.Seek(0, SeekOrigin.End);
+					} else {
+						LogFileStream.SetLength(0); // clear the file
+					}
 				}
 				LogFileWriter = new StreamWriter(LogFileStream);
 			}
@@ -335,9 +356,20 @@ namespace NReco.Logging.File {
 				}
 			}
 
+			void CheckCurrentLogFile() {
+				if (FileLogPrv.ShareDeleteAccess) {
+					// check if file was deleted
+					if (!System.IO.File.Exists(LogFileName)) {
+						Close();
+						OpenFile(false);
+					}
+				}
+			}
+
 			internal void WriteMessage(string message, bool flush) {
 				if (LogFileWriter != null) {
 					CheckForNewLogFile();
+					CheckCurrentLogFile();
 					LogFileWriter.WriteLine(message);
 					if (flush)
 						LogFileWriter.Flush();

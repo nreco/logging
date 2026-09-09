@@ -27,6 +27,16 @@ namespace NReco.Logging.File {
 		public bool Append { get; set; } = true;
 
 		/// <summary>
+		/// Share write operation access on log files
+		/// </summary>
+		public bool ShareWriteAccess { get; set; } = false;
+
+		/// <summary>
+		/// Share delete operation access on log files
+		/// </summary>
+		public bool ShareDeleteAccess { get; set; } = false;
+
+		/// <summary>
 		/// Determines max size of the one log file.
 		/// </summary>
 		/// <remarks>If log file limit is specified logger will create new file when limit is reached. 
